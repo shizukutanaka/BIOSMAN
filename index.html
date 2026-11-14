@@ -1,0 +1,2102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIOSMAN — Motherboard BIOS Manager</title>
+<style>
+:root{
+  --bg:#0d1117; --bg2:#111826; --card:#161e2c; --card2:#1b2637;
+  --line:#2a3648; --text:#e6edf3; --sub:#93a4bb; --faint:#6b7c93;
+  --accent:#4da3ff; --accent2:#2f7fe0;
+  --ok:#3fb96f; --warn:#e8a33d; --bad:#e5534b; --gray:#8b98a9;
+  --chip:#22314a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:"Segoe UI","Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",Meiryo,system-ui,-apple-system,sans-serif;
+  font-size:15px; line-height:1.55;
+}
+a{color:var(--accent)}
+button{font-family:inherit; cursor:pointer}
+input,select,textarea{font-family:inherit; font-size:14px}
+header.top{
+  position:sticky; top:0; z-index:40;
+  background:rgba(13,17,23,.94); backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--line);
+}
+.top-in{max-width:1080px; margin:0 auto; padding:12px 16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+.logo{display:flex; align-items:baseline; gap:10px; margin-right:auto}
+.logo .name{font-size:24px; font-weight:800; letter-spacing:2px}
+.logo .name span{color:var(--accent)}
+.logo .tag{color:var(--sub); font-size:12px}
+.top-actions{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+.btn{
+  background:var(--card2); color:var(--text); border:1px solid var(--line);
+  border-radius:8px; padding:8px 14px; font-size:13.5px; font-weight:600;
+}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent2); border-color:var(--accent2); color:#fff}
+.btn.primary:hover{background:var(--accent)}
+.btn.danger{color:#ff9d97}
+.btn:disabled{opacity:.45; cursor:not-allowed}
+.btn.small{padding:5px 10px; font-size:12.5px; border-radius:7px}
+select.langsel{
+  background:var(--card2); color:var(--text); border:1px solid var(--line);
+  border-radius:8px; padding:8px 10px; font-size:13.5px; font-weight:600;
+}
+main{max-width:1080px; margin:0 auto; padding:18px 16px 60px}
+.notice{
+  background:#221a10; border:1px solid #6b4d1f; color:#f0cf9a;
+  border-radius:10px; padding:10px 14px; font-size:13.5px; margin-bottom:16px;
+}
+.stats{display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:16px}
+.stat{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px}
+.stat .num{font-size:30px; font-weight:800; line-height:1.1}
+.stat .lbl{color:var(--sub); font-size:12.5px; margin-top:2px}
+.stat.s-update .num{color:var(--warn)}
+.stat.s-latest .num{color:var(--ok)}
+.stat.s-unknown .num{color:var(--gray)}
+.stat.s-usbpend .num{color:var(--bad)}
+.chip{display:inline-block; background:var(--chip); color:#bcd6ff; border-radius:12px; padding:1px 9px; font-size:11.5px; font-weight:700}
+.chip.warnchip{background:#2c2110; color:var(--warn)}
+.usb-line{margin-top:10px; font-size:12.5px; font-weight:800}
+.usb-line.ok{color:var(--ok)}
+.usb-line.bad{color:var(--bad)}
+.badge.ready{background:#0f2a1a; color:var(--ok); border-color:#1f5136}
+.badge.stale{background:#2c2110; color:var(--warn); border-color:#6b4d1f}
+.badge.empty,.badge.none,.badge.orphan{background:#232a35; color:var(--gray); border-color:#39424f}
+section.usbsec{margin-top:28px}
+.sec-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px}
+.sec-head h2{font-size:19px; margin:0; margin-right:auto}
+.guide-rule{background:var(--bg2); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:12px; font-size:13.5px}
+.guide-rule .fname{font-size:21px; font-weight:800; color:var(--accent); word-break:break-all; margin:4px 0}
+.guide-steps{margin:6px 0 4px; padding-left:22px}
+.guide-steps li{margin-bottom:5px; font-size:13.5px}
+.guide-note{color:var(--warn); font-size:13px; font-weight:700; margin-top:10px}
+.toolbar{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px}
+.toolbar .spacer{flex:1}
+.toolbar label{color:var(--sub); font-size:13px}
+.toolbar select{
+  background:var(--card2); color:var(--text); border:1px solid var(--line);
+  border-radius:8px; padding:7px 10px;
+}
+.empty{
+  background:var(--card); border:1px dashed var(--line); border-radius:14px;
+  padding:38px 24px; text-align:center; color:var(--sub);
+}
+.empty h2{color:var(--text); margin:0 0 8px; font-size:20px}
+.empty .row{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:18px}
+.card{
+  background:var(--card); border:1px solid var(--line); border-radius:14px;
+  padding:16px 18px; margin-bottom:12px;
+}
+.card-head{display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap}
+.machine{font-size:18px; font-weight:700}
+.vendor-chip{
+  background:var(--chip); color:#bcd6ff; border-radius:20px; padding:2px 10px;
+  font-size:12px; font-weight:700; letter-spacing:.4px;
+}
+.model{color:var(--sub); font-size:13.5px; margin-top:1px}
+.badge{
+  margin-left:auto; border-radius:20px; padding:3px 12px; font-size:12.5px; font-weight:800;
+  border:1px solid transparent; white-space:nowrap;
+}
+.badge.update{background:#2c2110; color:var(--warn); border-color:#6b4d1f}
+.badge.latest{background:#0f2a1a; color:var(--ok); border-color:#1f5136}
+.badge.unknown{background:#232a35; color:var(--gray); border-color:#39424f}
+.ver-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px}
+.ver-box{background:var(--bg2); border:1px solid var(--line); border-radius:10px; padding:10px 12px}
+.ver-box .k{color:var(--faint); font-size:11.5px; font-weight:700; letter-spacing:.6px}
+.ver-box .v{font-size:17px; font-weight:700; margin-top:2px; word-break:break-all}
+.ver-box .d{color:var(--sub); font-size:12px}
+.basis{color:var(--faint); font-size:12px; margin-top:8px}
+.memo{color:var(--sub); font-size:13px; margin-top:8px; white-space:pre-wrap; word-break:break-word}
+.card-actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:14px}
+.history{display:none; margin-top:12px; border-top:1px solid var(--line); padding-top:10px}
+.history.open{display:block}
+.history h4{margin:0 0 8px; font-size:13px; color:var(--sub)}
+.history-item{
+  background:var(--bg2); border:1px solid var(--line); border-radius:9px;
+  padding:8px 12px; margin-bottom:7px; font-size:13px;
+}
+.history-item .h-top{display:flex; gap:10px; flex-wrap:wrap; align-items:baseline}
+.history-item .h-date{color:var(--faint); font-size:12px}
+.history-item .h-flow{font-weight:700}
+.history-item .h-method{background:var(--chip); border-radius:12px; padding:1px 9px; font-size:11.5px; color:#bcd6ff}
+.history-item .h-note{color:var(--sub); margin-top:3px; white-space:pre-wrap}
+.history-none{color:var(--faint); font-size:13px}
+section.help{
+  background:var(--card); border:1px solid var(--line); border-radius:14px;
+  padding:18px 20px; margin-top:26px; color:var(--sub); font-size:13.5px;
+}
+section.help h2{color:var(--text); font-size:17px; margin:0 0 10px}
+section.help h3{color:var(--text); font-size:14.5px; margin:16px 0 6px}
+section.help ul{margin:6px 0; padding-left:20px}
+section.help .vendor-links{display:flex; gap:8px; flex-wrap:wrap; margin-top:6px}
+section.help .vendor-links a{
+  background:var(--card2); border:1px solid var(--line); border-radius:8px;
+  padding:6px 12px; text-decoration:none; font-weight:600; font-size:13px;
+}
+section.help .vendor-links a:hover{border-color:var(--accent)}
+footer{color:var(--faint); font-size:12px; text-align:center; padding:0 16px 34px}
+/* modal */
+.overlay{
+  position:fixed; inset:0; background:rgba(4,7,11,.72); z-index:60;
+  display:none; align-items:flex-start; justify-content:center; overflow-y:auto; padding:26px 12px;
+}
+.overlay.open{display:flex}
+.modal{
+  background:var(--card); border:1px solid var(--line); border-radius:14px;
+  width:100%; max-width:560px; padding:20px 22px; margin:auto 0;
+}
+.modal h2{margin:0 0 4px; font-size:19px}
+.modal .sub{color:var(--sub); font-size:13px; margin-bottom:14px}
+.field{margin-bottom:12px}
+.field label{display:block; font-size:12.5px; font-weight:700; color:var(--sub); margin-bottom:4px}
+.field input,.field select,.field textarea{
+  width:100%; background:var(--bg2); color:var(--text); border:1px solid var(--line);
+  border-radius:8px; padding:9px 11px;
+}
+.field textarea{resize:vertical; min-height:58px}
+.field .hint{color:var(--faint); font-size:11.5px; margin-top:3px}
+.frow{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.modal-actions{display:flex; gap:8px; justify-content:flex-end; margin-top:16px; flex-wrap:wrap}
+.flow{
+  display:flex; align-items:center; gap:10px; background:var(--bg2);
+  border:1px solid var(--line); border-radius:10px; padding:10px 14px; margin-bottom:14px;
+  font-weight:700; flex-wrap:wrap;
+}
+.flow .arr{color:var(--accent)}
+.checklist{display:flex; flex-direction:column; gap:8px; margin:6px 0 4px}
+.check-item{
+  display:flex; gap:10px; align-items:flex-start; background:var(--bg2);
+  border:1px solid var(--line); border-radius:10px; padding:10px 12px; cursor:pointer;
+}
+.check-item input{margin-top:3px; width:17px; height:17px; flex:none; accent-color:var(--accent2)}
+.check-item .ct{font-size:13.5px}
+.check-item.checked{border-color:var(--ok)}
+.warn-text{color:var(--warn); font-size:13px; font-weight:700}
+.pcpanel{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 18px; margin-bottom:14px}
+.pc-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+.pc-head h3{margin:0; font-size:16px; margin-right:auto}
+.pc-note{color:var(--warn); font-size:13px; margin-top:8px}
+.pc-actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px}
+.newver-banner{background:#2c2110; border:1px solid #6b4d1f; color:#ffd9a0; border-radius:10px; padding:10px 14px; margin-top:12px; font-size:13.5px}
+.newver-banner .nvb-title{font-weight:800; margin-bottom:4px}
+.scan-scroll{overflow-x:auto; margin-top:8px}
+table.scan{width:100%; border-collapse:collapse; font-size:13px; min-width:780px}
+table.scan th,table.scan td{border-bottom:1px solid var(--line); padding:8px; vertical-align:top; text-align:left}
+table.scan th{color:var(--sub); font-size:12px}
+.scan-name{font-weight:700; word-break:break-all}
+.scan-path{color:var(--faint); font-size:11.5px; word-break:break-all}
+.scan-sub{color:var(--sub); font-size:12px; margin-top:3px}
+.scan-est{color:var(--faint); font-size:11.5px; margin-top:3px}
+.scan-badge{margin-left:0; margin-top:5px; display:inline-block}
+.ver-input{width:120px; background:var(--bg2); color:var(--text); border:1px solid var(--line); border-radius:7px; padding:6px 8px; font-size:13px}
+.chip.graychip{background:#232a35; color:var(--gray)}
+.cand-head{font-weight:800; font-size:15px; margin:14px 0 6px}
+.cand-row{display:flex; gap:10px; align-items:center; flex-wrap:wrap; background:var(--bg2); border:1px solid var(--line); border-radius:10px; padding:9px 12px; margin-bottom:8px; font-size:13.5px}
+.cand-row .cand-ver{font-size:16px; font-weight:800; color:var(--accent)}
+@media (max-width:640px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .ver-grid{grid-template-columns:1fr}
+  .frow{grid-template-columns:1fr}
+  .badge{margin-left:0}
+  .logo .tag{display:none}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="logo">
+      <div class="name">BIOS<span>MAN</span></div>
+      <div class="tag" data-i18n="tagline"></div>
+    </div>
+    <div class="top-actions">
+      <button class="btn" id="btnCollector" data-i18n="btnCollector"></button>
+      <button class="btn" id="btnExport" data-i18n="btnExport"></button>
+      <button class="btn" id="btnImportFileBtn" data-i18n="btnImport"></button>
+      <input type="file" id="fileImport" accept="application/json,.json" style="display:none">
+      <select class="langsel" id="langSel" aria-label="Language">
+        <option value="ja">日本語</option>
+        <option value="en">English</option>
+      </select>
+      <button class="btn primary" id="btnAdd" data-i18n="btnAdd"></button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="notice" data-i18n="honestNotice"></div>
+
+  <div class="stats">
+    <div class="stat s-total"><div class="num" id="statTotal">0</div><div class="lbl" data-i18n="statTotal"></div></div>
+    <div class="stat s-update"><div class="num" id="statUpdate">0</div><div class="lbl" data-i18n="statUpdate"></div></div>
+    <div class="stat s-latest"><div class="num" id="statLatest">0</div><div class="lbl" data-i18n="statLatest"></div></div>
+    <div class="stat s-unknown"><div class="num" id="statUnknown">0</div><div class="lbl" data-i18n="statUnknown"></div></div>
+    <div class="stat s-usbpend"><div class="num" id="statUsbPend">0</div><div class="lbl" data-i18n="statUsbPend"></div></div>
+  </div>
+
+  <div class="toolbar">
+    <label for="sortSel" data-i18n="sortLabel"></label>
+    <select id="sortSel">
+      <option value="update" data-i18n="sortUpdate"></option>
+      <option value="created" data-i18n="sortCreated"></option>
+      <option value="machine" data-i18n="sortMachine"></option>
+    </select>
+    <div class="spacer"></div>
+    <button class="btn" id="btnImportOpen" data-i18n="btnPasteImport"></button>
+  </div>
+
+  <div id="emptyState" class="empty" style="display:none">
+    <h2 data-i18n="emptyTitle"></h2>
+    <div data-i18n="emptyBody"></div>
+    <div class="row">
+      <button class="btn primary" id="btnAddFirst" data-i18n="btnAddFirst"></button>
+      <button class="btn" id="btnImportFirst" data-i18n="btnPasteImport"></button>
+    </div>
+  </div>
+
+  <div id="boardList"></div>
+
+  <section class="usbsec">
+    <div class="sec-head">
+      <h2 data-i18n="usbSectionTitle"></h2>
+      <button class="btn" id="btnGuideOpen" data-i18n="btnGuide"></button>
+      <button class="btn primary" id="btnAddUsb" data-i18n="btnAddUsb"></button>
+    </div>
+    <div class="pcpanel" id="pcPanel">
+      <div class="pc-head">
+        <h3 data-i18n="pcTitle"></h3>
+        <span class="chip" id="pcState"></span>
+      </div>
+      <div class="pc-note" id="pcUnavailable" data-i18n="pcUnavailable" style="display:none"></div>
+      <div class="newver-banner" id="newVerBanner" style="display:none"></div>
+      <div class="pc-actions" id="pcActions">
+        <button class="btn primary" id="btnScanUsb" data-i18n="btnScanUsb"></button>
+        <button class="btn" id="btnCheckVer" data-i18n="btnCheckVer"></button>
+      </div>
+      <div class="basis" id="scanMeta"></div>
+      <div id="scanList"></div>
+      <div id="checkMeta" style="margin-top:8px"></div>
+      <div id="candidateList"></div>
+    </div>
+    <div id="usbEmpty" class="empty" style="display:none">
+      <div data-i18n="usbEmptyBody"></div>
+      <div class="row">
+        <button class="btn primary" id="btnAddUsbFirst" data-i18n="btnAddUsb"></button>
+      </div>
+    </div>
+    <div id="usbList"></div>
+  </section>
+
+  <section class="help">
+    <h2 data-i18n="helpTitle"></h2>
+    <div data-i18n="helpAbout"></div>
+    <h3 data-i18n="helpVendorsTitle"></h3>
+    <div class="vendor-links" id="vendorLinks"></div>
+    <h3 data-i18n="helpCollectTitle"></h3>
+    <div data-i18n="helpCollectBody"></div>
+    <h3 data-i18n="helpUsbTitle"></h3>
+    <div data-i18n="helpUsbBody"></div>
+    <h3 data-i18n="helpPcTitle"></h3>
+    <div data-i18n="helpPcBody"></div>
+    <h3 data-i18n="helpDataTitle"></h3>
+    <div data-i18n="helpDataBody"></div>
+  </section>
+</main>
+<footer>BIOSMAN — <span data-i18n="footerNote"></span></footer>
+
+<!-- Board add/edit modal -->
+<div class="overlay" id="boardModal">
+  <div class="modal">
+    <h2 id="boardModalTitle"></h2>
+    <div class="sub" data-i18n="formSub"></div>
+    <form id="boardForm">
+      <input type="hidden" id="fId">
+      <div class="frow">
+        <div class="field">
+          <label for="fMachine" data-i18n="fMachine"></label>
+          <input id="fMachine" required maxlength="80">
+        </div>
+        <div class="field">
+          <label for="fVendor" data-i18n="fVendor"></label>
+          <select id="fVendor">
+            <option value="ASUS">ASUS</option>
+            <option value="MSI">MSI</option>
+            <option value="GIGABYTE">GIGABYTE</option>
+            <option value="ASRock">ASRock</option>
+            <option value="Biostar">Biostar</option>
+            <option value="Other" data-i18n="vendorOther"></option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="fModel" data-i18n="fModel"></label>
+        <input id="fModel" required maxlength="120">
+        <div class="hint" data-i18n="fModelHint"></div>
+      </div>
+      <div class="frow">
+        <div class="field">
+          <label for="fCurVer" data-i18n="fCurVer"></label>
+          <input id="fCurVer" maxlength="40" placeholder="2613">
+        </div>
+        <div class="field">
+          <label for="fCurDate" data-i18n="fCurDate"></label>
+          <input id="fCurDate" type="date">
+        </div>
+      </div>
+      <div class="frow">
+        <div class="field">
+          <label for="fLatestVer" data-i18n="fLatestVer"></label>
+          <input id="fLatestVer" maxlength="40" placeholder="2904">
+        </div>
+        <div class="field">
+          <label for="fLatestDate" data-i18n="fLatestDate"></label>
+          <input id="fLatestDate" type="date">
+        </div>
+      </div>
+      <div class="field">
+        <label for="fDlUrl" data-i18n="fDlUrl"></label>
+        <input id="fDlUrl" type="url" maxlength="500" placeholder="https://">
+        <div class="hint" data-i18n="fDlUrlHint"></div>
+      </div>
+      <div class="field">
+        <label for="fMemo" data-i18n="fMemo"></label>
+        <textarea id="fMemo" maxlength="1000"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="btnBoardCancel" data-i18n="cancel"></button>
+        <button type="submit" class="btn primary" id="btnBoardSave" data-i18n="save"></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Update record modal -->
+<div class="overlay" id="updateModal">
+  <div class="modal">
+    <h2 data-i18n="uTitle"></h2>
+    <div class="sub" id="uBoardName"></div>
+    <div class="flow"><span id="uFrom"></span><span class="arr">→</span><span id="uTo"></span></div>
+    <div class="field">
+      <label data-i18n="uChecklistTitle"></label>
+      <div class="checklist" id="uChecklist"></div>
+    </div>
+    <div class="frow">
+      <div class="field">
+        <label for="uMethod" data-i18n="uMethod"></label>
+        <select id="uMethod">
+          <option value="USB BIOS Flashback">USB BIOS Flashback</option>
+          <option value="EZ Flash">EZ Flash (ASUS)</option>
+          <option value="M-Flash">M-Flash (MSI)</option>
+          <option value="Q-Flash">Q-Flash (GIGABYTE)</option>
+          <option value="Instant Flash">Instant Flash (ASRock)</option>
+          <option value="Other" data-i18n="methodOther"></option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="uDate" data-i18n="uDate"></label>
+        <input id="uDate" type="date">
+      </div>
+    </div>
+    <div class="field">
+      <label for="uNote" data-i18n="uNote"></label>
+      <textarea id="uNote" maxlength="500"></textarea>
+    </div>
+    <div class="warn-text" data-i18n="uWarn"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn" id="btnUpdateCancel" data-i18n="cancel"></button>
+      <button type="button" class="btn primary" id="btnUpdateConfirm" disabled data-i18n="uConfirm"></button>
+    </div>
+  </div>
+</div>
+
+<!-- Paste import modal -->
+<div class="overlay" id="importModal">
+  <div class="modal">
+    <h2 data-i18n="iTitle"></h2>
+    <div class="sub" data-i18n="iSub"></div>
+    <div class="field">
+      <label for="importMachine" data-i18n="fMachine"></label>
+      <input id="importMachine" maxlength="80">
+    </div>
+    <div class="field">
+      <label for="importText" data-i18n="iTextLabel"></label>
+      <textarea id="importText" rows="8" style="font-family:Consolas,monospace; font-size:12.5px" placeholder="BASEBOARD_MANUFACTURER=ASUSTeK COMPUTER INC.&#10;BASEBOARD_PRODUCT=ROG STRIX B650E-F GAMING WIFI&#10;BIOS_VERSION=2613&#10;BIOS_RELEASEDATE=2024-10-05"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn" id="btnImportCancel" data-i18n="cancel"></button>
+      <button type="button" class="btn primary" id="btnImportParse" data-i18n="iParse"></button>
+    </div>
+  </div>
+</div>
+
+<!-- USB add/edit modal -->
+<div class="overlay" id="usbModal">
+  <div class="modal">
+    <h2 id="usbModalTitle"></h2>
+    <div class="sub" data-i18n="usbFormSub"></div>
+    <form id="usbForm">
+      <input type="hidden" id="usId">
+      <div class="frow">
+        <div class="field">
+          <label for="usName" data-i18n="uName"></label>
+          <input id="usName" required maxlength="80">
+        </div>
+        <div class="field">
+          <label for="usCapacity" data-i18n="uCapacity"></label>
+          <input id="usCapacity" maxlength="20" placeholder="16GB">
+        </div>
+      </div>
+      <div class="frow">
+        <div class="field">
+          <label for="usFat32" data-i18n="uFat32"></label>
+          <select id="usFat32">
+            <option value="no" data-i18n="fatNo"></option>
+            <option value="yes" data-i18n="fatYes"></option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="usBoard" data-i18n="uBoard"></label>
+          <select id="usBoard"></select>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="field">
+          <label for="usFile" data-i18n="uFile"></label>
+          <input id="usFile" maxlength="120" placeholder="MSI.ROM">
+          <div class="hint" data-i18n="uFileHint"></div>
+        </div>
+        <div class="field">
+          <label for="usVer" data-i18n="uUsbVer"></label>
+          <input id="usVer" maxlength="40" placeholder="2904">
+        </div>
+      </div>
+      <div class="field">
+        <label for="usDate" data-i18n="uPrepDate"></label>
+        <input id="usDate" type="date">
+      </div>
+      <div class="field">
+        <label for="usMemo" data-i18n="fMemo"></label>
+        <textarea id="usMemo" maxlength="1000"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="btnUsbCancel" data-i18n="cancel"></button>
+        <button type="submit" class="btn primary" data-i18n="save"></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- USB prep guide modal -->
+<div class="overlay" id="guideModal">
+  <div class="modal">
+    <h2 data-i18n="guideTitle"></h2>
+    <div class="sub" data-i18n="guideSub"></div>
+    <div class="field">
+      <label for="gBoard" data-i18n="guideBoardLabel"></label>
+      <select id="gBoard"></select>
+    </div>
+    <div id="guideBody"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn" id="btnGuideCancel" data-i18n="cancel"></button>
+      <button type="button" class="btn primary" id="btnGuideRecord" data-i18n="guideRecordBtn"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ================= BIOSMAN =================
+   Single-file BIOS registry for multiple motherboards.
+   All data stays in this browser's localStorage (key: biosman-v1).
+   BIOSMAN only records and guides. It never downloads or flashes a BIOS. */
+
+var STORAGE_KEY = "biosman-v1";
+
+var VENDOR_LINKS = {
+  "ASUS":     "https://www.asus.com/support/download-center/",
+  "MSI":      "https://www.msi.com/support/download",
+  "GIGABYTE": "https://www.gigabyte.com/Support",
+  "ASRock":   "https://www.asrock.com/support/download.asp",
+  "Biostar":  "https://www.biostar.com.tw/app/en/support/download.php"
+};
+
+var I18N = {
+ja: {
+  tagline: "複数マザーボードの BIOS 台帳",
+  btnCollector: "収集バッチ (.bat)",
+  btnExport: "JSON 書き出し",
+  btnImport: "JSON 読み込み",
+  btnAdd: "＋ ボードを追加",
+  btnPasteImport: "収集テキストを取り込む",
+  honestNotice: "BIOSMAN は記録と案内をするものです。BIOS ファイルのダウンロードや、BIOS の書き換え自体は行いません。書き換えは必ずベンダー公式の手順で行ってください。",
+  statTotal: "登録ボード",
+  statUpdate: "更新あり",
+  statLatest: "最新",
+  statUnknown: "未確認",
+  sortLabel: "並び替え",
+  sortUpdate: "更新ありを先頭",
+  sortCreated: "登録順",
+  sortMachine: "マシン名順",
+  emptyTitle: "まだボードが登録されていません",
+  emptyBody: "最初の1件を登録すると、BIOS の版数と更新状況をここで管理できます。Windows PC では「収集バッチ」を使うと、マザーボード名と BIOS バージョンを自動で取り込めます。",
+  btnAddFirst: "＋ 最初のボードを登録",
+  helpTitle: "BIOSMAN について",
+  helpAbout: "BIOSMAN は、複数台の PC のマザーボードについて「どのマシンに・どのボードが・どの BIOS バージョンで載っていて・最新版が出ているか・いつ更新したか」を記録する台帳です。BIOS の書き換えそのものは行いません。更新ファイルの入手と書き換えは、各ベンダーの公式ページと公式手順で行ってください。バージョンの新旧判定は数字と文字を分けて比べる近似判定で、画面に両方のバージョンを常時表示します。最終確認は公式ページでお願いします。",
+  helpVendorsTitle: "ベンダー公式ダウンロードセンター",
+  helpCollectTitle: "情報収集バッチの使い方（Windows）",
+  helpCollectBody: "画面上部の「収集バッチ (.bat)」で biosman-collect.bat を保存し、調べたい Windows PC で実行すると、同じフォルダに biosman-info.txt ができます。その内容を「収集テキストを取り込む」に貼り付けると、登録フォームに自動入力されます。バッチが読むのはマザーボードと BIOS の情報だけで、外部送信は一切しません。",
+  helpDataTitle: "データについて",
+  helpDataBody: "データはこのブラウザの localStorage にだけ保存されます。作成者側のサーバー等に送られることはありません。バックアップや別の端末への移行には「JSON 書き出し／読み込み」を使ってください。",
+  footerNote: "記録と案内のための台帳です。BIOS の書き換えは行いません。",
+  formSub: "マザーボードと BIOS の状態を記録します。分からない項目は空欄で構いません。",
+  formAddTitle: "ボードを登録",
+  formEditTitle: "ボードを編集",
+  fMachine: "マシン名",
+  fVendor: "ベンダー",
+  vendorOther: "その他",
+  fModel: "モデル名",
+  fModelHint: "基板に印字された正式名称とリビジョン（例: Rev 1.0）をそのまま書いてください。",
+  fCurVer: "現在の BIOS バージョン",
+  fCurDate: "現在の BIOS 日付",
+  fLatestVer: "最新と知っているバージョン",
+  fLatestDate: "最新版の日付",
+  fDlUrl: "このボードの公式ダウンロード URL（任意）",
+  fDlUrlHint: "そのモデルの公式サポートページ。空欄ならベンダーのダウンロードセンターにリンクします。",
+  fMemo: "メモ",
+  cancel: "キャンセル",
+  save: "保存",
+  curLabel: "現在の BIOS",
+  latestLabel: "最新と知っている BIOS",
+  unrecorded: "（未記録）",
+  basis: "判定: 現在 {cur} ／ 最新 {latest}",
+  statusUpdate: "更新あり",
+  statusLatest: "最新",
+  statusUnknown: "未確認",
+  actOfficial: "公式ページ",
+  actUpdate: "更新した",
+  actEdit: "編集",
+  actHistory: "履歴",
+  actDelete: "削除",
+  histNone: "更新履歴はまだありません。",
+  histTitle: "更新履歴",
+  confirmDelete: "「{name}」の記録を削除しますか？（履歴も消えます）",
+  uTitle: "BIOS 更新の記録",
+  uChecklistTitle: "安全チェックリスト（全てにチェックが入るまで確定できません）",
+  uMethod: "更新方法",
+  methodOther: "その他",
+  uDate: "更新日",
+  uNote: "結果メモ",
+  uWarn: "書き換え中に電源を切るとマザーボードが起動しなくなることがあります。チェックリストを満たしたときだけ記録してください。",
+  uConfirm: "更新を記録する",
+  checks: [
+    "モデル名とリビジョンが、ダウンロードページと完全一致している",
+    "電源が安定している（ノートPCはAC接続／デスクトップは作業中に停電しない見込み）",
+    "BitLocker の回復キーを控え、保護を一時停止した",
+    "現在の BIOS 設定を記録した（写真・書き出し）",
+    "ファイルはベンダーの公式ページから入手した",
+    "書き換え中は絶対に電源を切らない",
+  ],
+  iTitle: "収集テキストの取り込み",
+  iSub: "biosman-info.txt の内容を貼り付けると、ベンダー・モデル・現在の BIOS バージョンと日付を読み取って登録フォームを開きます。",
+  iTextLabel: "biosman-info.txt の内容",
+  iParse: "読み取ってフォームを開く",
+  iParseFail: "読み取れる項目がありませんでした。KEY=VALUE 形式のテキストを貼り付けてください。",
+  importOk: "JSON を読み込みました（{n} 件）。",
+  importFail: "JSON の読み込みに失敗しました。BIOSMAN から書き出したファイルを選んでください。",
+  importConfirm: "現在の記録 {cur} 件を、読み込む {n} 件で置き換えます。よろしいですか？",
+  statUsbPend: "更新あり・USB未準備",
+  usbSectionTitle: "USB メモリ台帳",
+  btnAddUsb: "＋ USB を追加",
+  btnGuide: "USB 準備ガイド",
+  usbEmptyBody: "USB メモリはまだ登録されていません。BIOS 更新に使う USB を登録すると、「どの USB に・どのボード用の・どのバージョンのファイルが入っているか」を管理できます。",
+  usbFormSub: "USB メモリの状態を記録します。BIOSMAN が USB を直接読み書きすることはありません。",
+  usbFormAddTitle: "USB を登録",
+  usbFormEditTitle: "USB を編集",
+  uName: "名前",
+  uCapacity: "容量",
+  uFat32: "FAT32 でフォーマット済み",
+  fatYes: "はい（FAT32 済み）",
+  fatNo: "いいえ／未確認",
+  uBoard: "担当ボード",
+  uBoardNone: "（未割当）",
+  uFile: "入っている BIOS ファイル名",
+  uFileHint: "USB のルートに入っているファイル名をそのまま書いてください。",
+  uUsbVer: "入っている BIOS バージョン",
+  uPrepDate: "準備した日",
+  usbReady: "準備OK",
+  usbStale: "古い（作り直し）",
+  usbEmpty: "ファイル未記録",
+  usbUnknown: "判定不可",
+  usbNone: "未割当",
+  usbOrphan: "ボード不明",
+  chipFat32: "FAT32",
+  chipNoFat32: "FAT32 未確認",
+  chipNoBoard: "担当ボードなし",
+  boardUsbReady: "USB 準備OK: {name}",
+  boardUsbNone: "USB 未準備",
+  usbBasis: "担当: {board} ／ USB内 {uver} ／ ボード最新 {latest}",
+  usbNoFile: "（ファイル未記録）",
+  actUsbEdit: "編集",
+  actUsbDelete: "削除",
+  confirmDeleteUsb: "USB「{name}」の記録を削除しますか？",
+  guideTitle: "USB 準備ガイド",
+  guideSub: "ボードを選ぶと、そのベンダーの USB 書き換え用ファイル名の規則と手順を表示します。",
+  guideBoardLabel: "対象ボード",
+  guideRuleTitle: "ファイル名の規則（{vendor}）",
+  guideFileNameLabel: "使うファイル名",
+  guideTargetVer: "入れるバージョン: {ver}",
+  guideNoLatest: "このボードは「最新と知っているバージョン」が未記録です。先に公式ページで最新版を確認し、ボードの記録に最新バージョンを入れてから準備してください。",
+  guideStepsTitle: "共通の手順",
+  guideNote: "ここに示すのは一般的な規則です。ファイル名や手順は機種で異なる場合があります。最終確認は必ずマザーボードのマニュアルで行ってください。",
+  guideRecordBtn: "この内容で USB を準備したとして記録する",
+  guideNoBoards: "先にボードを登録してください。",
+  guideAsusName: "BIOSRenamer で決まる名前",
+  rules: {
+    "ASUS": "USB BIOS Flashback 用のファイルは、ダウンロードした BIOS に同梱の BIOSRenamer.exe で自動リネームされたファイル名を使います（機種ごとに決まった名前になります）。",
+    "MSI": "Flash BIOS Button 用のファイルは、ファイル名を MSI.ROM にリネームします。",
+    "GIGABYTE": "Q-Flash Plus 用のファイルは、ファイル名を GIGABYTE.bin にリネームします。",
+    "ASRock": "BIOS Flashback 用のファイルは、ファイル名を PSPBIOS.IMG にリネームします（機種により異なる場合があります）。",
+    "Biostar": "Biostar の USB 更新では、ダウンロードした BIOS ファイルをそのまま使うのが一般的です。専用のリネーム規則があるか、マニュアルで確認してください。",
+    "Other": "ベンダー・機種により規則が異なります。マニュアルで Flashback 相当機能のファイル名と手順を確認してください。"
+  },
+  ruleFile: {
+    "MSI": "MSI.ROM",
+    "GIGABYTE": "GIGABYTE.bin",
+    "ASRock": "PSPBIOS.IMG"
+  },
+  guideSteps: [
+    "USB メモリを FAT32 でフォーマットする（中身は消えるので注意）",
+    "ベンダー公式ページからダウンロードした BIOS ファイルを、USB のルート（一番上の階層）にコピーする",
+    "上の規則どおりにファイル名を変更する",
+    "「ハードウェアを安全に取り外す」で USB を取り出す",
+    "対象マシンの指定ポートに挿し、ベンダーの手順（Flashback ボタンなど）で書き換える"
+  ],
+  helpUsbTitle: "USB メモリの管理について",
+  helpUsbBody: "BIOS 更新は FAT32 の USB メモリ経由が主流です。ボードが複数あると、どの USB にどのボード用のファイルが入っているか分からなくなるのが事故のもとです。USB 台帳に「担当ボード・入っているファイル名・バージョン・準備した日」を記録し、準備ガイドでベンダーごとのファイル名の規則を確認してから作業してください。BIOSMAN が USB を直接読み書きすることはありません（記録は手入力です）。",
+  pcTitle: "PC 連携（USB 走査・版数チェック）",
+  pcOn: "実行ファイル版で接続中",
+  pcOff: "ブラウザでは無効",
+  pcUnavailable: "USB の実走査と公式ページの版数チェックは、実行ファイル版（BIOSMAN.exe）でのみ使えます。今はブラウザで開いているため、この機能は無効です（台帳の記録は通常どおり使えます）。",
+  btnScanUsb: "USB を調べる",
+  btnCheckVer: "新しい版数を探す",
+  scanBusy: "USB を調べています…",
+  checkBusyLabel: "公式ページを確認しています…",
+  scanError: "走査でエラーがありました: {error}",
+  scanFound: "BIOS ファイル {n} 件が見つかりました（読み取りのみ。USB への書き込みはしません）。",
+  scanNone: "BIOS ファイルは見つかりませんでした。リムーバブルドライブが接続されていないか、対象ファイルがありません。",
+  scanColDrive: "ドライブ",
+  scanColFile: "ファイル",
+  scanColSize: "サイズ",
+  scanColMtime: "更新日時",
+  scanColMatch: "台帳との照合",
+  scanColVer: "版数（編集可）",
+  matchRecorded: "台帳に記録あり",
+  matchCandidate: "候補ボード",
+  matchUnknown: "未判定",
+  matchFlash: "Flashback 名（{vendor}）",
+  estLabel: "ファイル名からの推定",
+  btnRecordFile: "このファイルで記録／更新",
+  scanUsbName: "USB（{drive}）",
+  notifyTitle: "BIOSMAN",
+  newerBannerTitle: "USB の中に、今より新しい BIOS があります",
+  newerLine: "{machine}（{model}）: 現在 {cur} → USB 内 {ver}",
+  checkNoUrl: "公式ダウンロード URL が登録されたボードがありません。ボードの「編集」から URL を登録すると、ここで新しい版数を探せます。",
+  checkFail: "取得失敗: {board}（{error}）",
+  candTitle: "新しい版数の候補",
+  candNote: "候補は公式ページの文字列から抽出した推定です。ベンダーごとにページ構造が違うため、自動では断定しません。公式ページで内容を確認し、正しいものだけ記録してください。",
+  candFor: "{machine}（{model}）の候補",
+  candNotify: "{machine}（{model}）に新しい版数の候補 {ver} が見つかりました",
+  btnRecordLatest: "最新として記録",
+  candNone: "新しい版数の候補は見つかりませんでした。",
+  recordedLatest: "{machine} の最新バージョンに {ver} を記録しました。",
+  helpPcTitle: "PC 連携（実行ファイル版のみ）",
+  helpPcBody: "実行ファイル版（BIOSMAN.exe）では、接続中の USB メモリを読み取り専用で走査し、中の BIOS ファイルを台帳と照合して一覧表示できます。ファイル名から版数を推定できる場合は「推定」と明示して候補を出し、記録前に直せます。USB 内の版数がボードの現在バージョンより新しいものがあれば通知します。また、公式ダウンロード URL が登録されたボードについては公式ページを取得し、新しい版数の候補を提示します。候補は推定であり、記録は必ず人が確認してから行います。USB への書き込みや削除は一切しません。",
+},
+en: {
+  tagline: "BIOS registry for multiple motherboards",
+  btnCollector: "Collector (.bat)",
+  btnExport: "Export JSON",
+  btnImport: "Import JSON",
+  btnAdd: "+ Add board",
+  btnPasteImport: "Import collected text",
+  honestNotice: "BIOSMAN records and guides only. It does not download BIOS files and it never flashes a BIOS. Always update using the vendor's official procedure.",
+  statTotal: "Boards",
+  statUpdate: "Update available",
+  statLatest: "Up to date",
+  statUnknown: "Unknown",
+  sortLabel: "Sort",
+  sortUpdate: "Updates first",
+  sortCreated: "By registration",
+  sortMachine: "By machine name",
+  emptyTitle: "No boards registered yet",
+  emptyBody: "Register your first board to track its BIOS version and update status here. On a Windows PC, the Collector batch can fill in the motherboard name and BIOS version automatically.",
+  btnAddFirst: "+ Register your first board",
+  helpTitle: "About BIOSMAN",
+  helpAbout: "BIOSMAN is a registry that records, for every PC you own, which motherboard it has, which BIOS version is installed, whether a newer one exists, and when you updated. It never flashes a BIOS itself. Get update files and follow procedures only on each vendor's official pages. Version comparison is an approximation (digits and letters compared separately); both versions are always shown on screen, so check the official page for the final word.",
+  helpVendorsTitle: "Official vendor download centers",
+  helpCollectTitle: "Using the collector batch (Windows)",
+  helpCollectBody: "Use \"Collector (.bat)\" at the top to save biosman-collect.bat, run it on the Windows PC you want to inspect, and it writes biosman-info.txt next to itself. Paste that file's contents into \"Import collected text\" and the registration form is filled in for you. The batch only reads motherboard and BIOS information and sends nothing anywhere.",
+  helpDataTitle: "Your data",
+  helpDataBody: "Data is stored only in this browser's localStorage. Nothing is sent to the author's servers. Use Export / Import JSON for backup or moving to another device.",
+  footerNote: "A registry for records and guidance. It does not flash BIOS.",
+  formSub: "Record the motherboard and BIOS state. Leave unknown fields blank.",
+  formAddTitle: "Register a board",
+  formEditTitle: "Edit board",
+  fMachine: "Machine name",
+  fVendor: "Vendor",
+  vendorOther: "Other",
+  fModel: "Model name",
+  fModelHint: "Write the exact name and revision printed on the board (e.g. Rev 1.0).",
+  fCurVer: "Current BIOS version",
+  fCurDate: "Current BIOS date",
+  fLatestVer: "Latest known version",
+  fLatestDate: "Latest version date",
+  fDlUrl: "Official download URL for this board (optional)",
+  fDlUrlHint: "The official support page for this model. If blank, links to the vendor download center.",
+  fMemo: "Notes",
+  cancel: "Cancel",
+  save: "Save",
+  curLabel: "CURRENT BIOS",
+  latestLabel: "LATEST KNOWN BIOS",
+  unrecorded: "(not recorded)",
+  basis: "Basis: current {cur} / latest {latest}",
+  statusUpdate: "Update available",
+  statusLatest: "Up to date",
+  statusUnknown: "Unknown",
+  actOfficial: "Official page",
+  actUpdate: "Mark updated",
+  actEdit: "Edit",
+  actHistory: "History",
+  actDelete: "Delete",
+  histNone: "No update history yet.",
+  histTitle: "Update history",
+  confirmDelete: "Delete the record for \"{name}\"? (Its history will also be removed.)",
+  uTitle: "Record a BIOS update",
+  uChecklistTitle: "Safety checklist (all items must be checked to confirm)",
+  uMethod: "Update method",
+  methodOther: "Other",
+  uDate: "Update date",
+  uNote: "Result notes",
+  uWarn: "Cutting power during a BIOS update can leave the motherboard unable to boot. Only record the update once every checklist item is truly done.",
+  uConfirm: "Record update",
+  checks: [
+    "The model name and revision exactly match the download page",
+    "Power is stable (laptop on AC power / no outage expected during the update)",
+    "BitLocker recovery key is saved and protection has been suspended",
+    "Current BIOS settings have been recorded (photo or export)",
+    "The file was obtained from the vendor's official page",
+    "I will never turn off the power during the update",
+  ],
+  iTitle: "Import collected text",
+  iSub: "Paste the contents of biosman-info.txt and BIOSMAN reads the vendor, model, current BIOS version and date, then opens the registration form.",
+  iTextLabel: "Contents of biosman-info.txt",
+  iParse: "Parse and open the form",
+  iParseFail: "Nothing readable was found. Paste KEY=VALUE text.",
+  importOk: "Imported JSON ({n} boards).",
+  importFail: "Failed to import JSON. Choose a file exported by BIOSMAN.",
+  importConfirm: "Replace the current {cur} records with the {n} imported ones?",
+  statUsbPend: "Update available, USB not ready",
+  usbSectionTitle: "USB drives",
+  btnAddUsb: "+ Add USB drive",
+  btnGuide: "USB prep guide",
+  usbEmptyBody: "No USB drives registered yet. Register the USB drives you use for BIOS updates to track which drive holds which board's file, and at which version.",
+  usbFormSub: "Record the state of a USB drive. BIOSMAN never reads or writes USB drives directly.",
+  usbFormAddTitle: "Register a USB drive",
+  usbFormEditTitle: "Edit USB drive",
+  uName: "Name",
+  uCapacity: "Capacity",
+  uFat32: "Formatted as FAT32",
+  fatYes: "Yes (FAT32)",
+  fatNo: "No / not sure",
+  uBoard: "Assigned board",
+  uBoardNone: "(unassigned)",
+  uFile: "BIOS file name on the drive",
+  uFileHint: "Write the exact file name sitting in the root of the USB drive.",
+  uUsbVer: "BIOS version on the drive",
+  uPrepDate: "Prepared on",
+  usbReady: "Ready",
+  usbStale: "Stale (recreate)",
+  usbEmpty: "No file recorded",
+  usbUnknown: "Cannot judge",
+  usbNone: "Unassigned",
+  usbOrphan: "Board unknown",
+  chipFat32: "FAT32",
+  chipNoFat32: "FAT32 unconfirmed",
+  chipNoBoard: "No board assigned",
+  boardUsbReady: "USB ready: {name}",
+  boardUsbNone: "USB not ready",
+  usbBasis: "Board: {board} / on USB {uver} / board latest {latest}",
+  usbNoFile: "(no file recorded)",
+  actUsbEdit: "Edit",
+  actUsbDelete: "Delete",
+  confirmDeleteUsb: "Delete the record for USB \"{name}\"?",
+  guideTitle: "USB prep guide",
+  guideSub: "Pick a board and BIOSMAN shows that vendor's USB-flashing file-name rule and the steps.",
+  guideBoardLabel: "Target board",
+  guideRuleTitle: "File name rule ({vendor})",
+  guideFileNameLabel: "File name to use",
+  guideTargetVer: "Version to put on the drive: {ver}",
+  guideNoLatest: "This board has no \"latest known version\" recorded. Check the official page for the newest release and record it on the board first, then prepare the USB.",
+  guideStepsTitle: "Common steps",
+  guideNote: "These are general rules; file names and steps can differ by model. Always confirm with your motherboard manual before flashing.",
+  guideRecordBtn: "Record a USB prepared this way",
+  guideNoBoards: "Register a board first.",
+  guideAsusName: "Name chosen by BIOSRenamer",
+  rules: {
+    "ASUS": "For USB BIOS Flashback, use the file name produced by BIOSRenamer.exe, which is bundled with the downloaded BIOS (the name is fixed per model).",
+    "MSI": "For the Flash BIOS Button, rename the file to MSI.ROM.",
+    "GIGABYTE": "For Q-Flash Plus, rename the file to GIGABYTE.bin.",
+    "ASRock": "For BIOS Flashback, rename the file to PSPBIOS.IMG (may differ by model).",
+    "Biostar": "Biostar USB updates generally use the downloaded BIOS file as-is. Check the manual for any renaming rule.",
+    "Other": "Rules differ by vendor and model. Check the manual for the Flashback-equivalent file name and procedure."
+  },
+  ruleFile: {
+    "MSI": "MSI.ROM",
+    "GIGABYTE": "GIGABYTE.bin",
+    "ASRock": "PSPBIOS.IMG"
+  },
+  guideSteps: [
+    "Format the USB drive as FAT32 (this erases its contents)",
+    "Copy the BIOS file downloaded from the vendor's official page to the root (top level) of the USB drive",
+    "Rename the file according to the rule above",
+    "Eject the drive with \"Safely remove hardware\"",
+    "Insert it into the designated port of the target machine and flash using the vendor's procedure (Flashback button, etc.)"
+  ],
+  helpUsbTitle: "Managing USB drives",
+  helpUsbBody: "BIOS updates usually go through a FAT32 USB drive. With several boards, losing track of which drive holds which board's file is a classic accident. Record the assigned board, file name, version and prepared date in the USB registry, and check the vendor's file-name rule in the prep guide before you start. BIOSMAN never reads or writes USB drives directly (records are entered by hand).",
+  pcTitle: "PC integration (USB scan & version check)",
+  pcOn: "Desktop app connected",
+  pcOff: "Unavailable in a browser",
+  pcUnavailable: "Scanning real USB drives and checking official pages for newer versions are only available in the desktop app (BIOSMAN.exe). You are viewing this in a browser, so these features are disabled (the registry itself works as usual).",
+  btnScanUsb: "Scan USB drives",
+  btnCheckVer: "Check for newer versions",
+  scanBusy: "Scanning USB drives…",
+  checkBusyLabel: "Checking official pages…",
+  scanError: "Scan error: {error}",
+  scanFound: "{n} BIOS file(s) found (read-only; nothing is written to USB).",
+  scanNone: "No BIOS files were found. Either no removable drive is connected, or it holds no matching files.",
+  scanColDrive: "Drive",
+  scanColFile: "File",
+  scanColSize: "Size",
+  scanColMtime: "Modified",
+  scanColMatch: "Registry match",
+  scanColVer: "Version (editable)",
+  matchRecorded: "Already recorded",
+  matchCandidate: "Candidate board(s)",
+  matchUnknown: "Undetermined",
+  matchFlash: "Flashback name ({vendor})",
+  estLabel: "Estimated from file name",
+  btnRecordFile: "Record / update from this file",
+  scanUsbName: "USB ({drive})",
+  notifyTitle: "BIOSMAN",
+  newerBannerTitle: "A newer BIOS than the installed one is on a USB drive",
+  newerLine: "{machine} ({model}): current {cur} -> on USB {ver}",
+  checkNoUrl: "No board has an official download URL recorded. Add one via the board's Edit form to enable version checks here.",
+  checkFail: "Fetch failed: {board} ({error})",
+  candTitle: "Candidate newer versions",
+  candNote: "Candidates are estimates extracted from the text of official pages. Page layouts differ by vendor, so nothing is recorded automatically. Verify on the official page and record only what is correct.",
+  candFor: "Candidates for {machine} ({model})",
+  candNotify: "A newer version candidate {ver} was found for {machine} ({model})",
+  btnRecordLatest: "Record as latest",
+  candNone: "No newer version candidates were found.",
+  recordedLatest: "Recorded {ver} as the latest version for {machine}.",
+  helpPcTitle: "PC integration (desktop app only)",
+  helpPcBody: "In the desktop app (BIOSMAN.exe), BIOSMAN scans connected USB drives read-only, lists the BIOS files it finds, and matches them against the registry. When a version can be estimated from a file name it is labelled as an estimate and can be corrected before recording. You are notified when a USB drive holds a BIOS newer than a board's installed version. For boards with a recorded official download URL, the official page is fetched and newer-version candidates are presented. Candidates are estimates; recording always requires your confirmation. USB drives are never written to or deleted from.",
+}
+};
+</script>
+
+<script>
+"use strict";
+/* ---------- state ---------- */
+var state = loadState();
+var sortMode = "update";
+var updateTargetId = null;
+var openHistory = {};
+
+function loadState(){
+  try{
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      var parsed = JSON.parse(raw);
+      if(parsed && Array.isArray(parsed.boards)){
+        return {
+          lang: parsed.lang === "en" ? "en" : "ja",
+          boards: parsed.boards,
+          usbs: Array.isArray(parsed.usbs) ? parsed.usbs : []
+        };
+      }
+    }
+  }catch(e){ /* corrupted storage: start clean rather than crash */ }
+  return { lang: "ja", boards: [], usbs: [] };
+}
+function saveState(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){ /* quota: keep running */ }
+}
+function t(key){
+  var d = I18N[state.lang] || I18N.ja;
+  return (key in d) ? d[key] : (I18N.ja[key] || key);
+}
+function esc(s){
+  return String(s == null ? "" : s)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+function uid(){
+  return "b" + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+}
+function todayStr(){
+  var d = new Date();
+  var m = String(d.getMonth()+1).padStart(2,"0");
+  var day = String(d.getDate()).padStart(2,"0");
+  return d.getFullYear() + "-" + m + "-" + day;
+}
+
+/* ---------- version comparison (natural, approximate) ---------- */
+function normVer(v){
+  return String(v == null ? "" : v).trim().replace(/^[vV](?=\d)/, "");
+}
+function tokenizeVer(v){
+  return normVer(v).match(/\d+|\D+/g) || [];
+}
+function cmpVer(a, b){
+  var ta = tokenizeVer(a), tb = tokenizeVer(b);
+  var n = Math.max(ta.length, tb.length);
+  for(var i=0;i<n;i++){
+    var x = ta[i], y = tb[i];
+    if(x === undefined) return -1;
+    if(y === undefined) return 1;
+    var xd = /^\d+$/.test(x), yd = /^\d+$/.test(y);
+    if(xd && yd){
+      var xs = x.replace(/^0+/,"") || "0";
+      var ys = y.replace(/^0+/,"") || "0";
+      if(xs.length !== ys.length) return xs.length < ys.length ? -1 : 1;
+      if(xs !== ys) return xs < ys ? -1 : 1;
+    }else{
+      var xl = x.toLowerCase(), yl = y.toLowerCase();
+      if(xl !== yl) return xl < yl ? -1 : 1;
+    }
+  }
+  return 0;
+}
+function boardStatus(b){
+  if(!normVer(b.latestVer)) return "unknown";
+  var c = cmpVer(b.curVer || "", b.latestVer);
+  return c < 0 ? "update" : "latest";
+}
+
+/* ---------- USB drives ---------- 
+   Statuses: ready / stale / empty / unknown / none / orphan */
+function findUsb(id){
+  var list = state.usbs || [];
+  for(var i=0;i<list.length;i++){ if(list[i].id === id) return list[i]; }
+  return null;
+}
+function usbStatus(u){
+  if(!u.boardId) return "none";
+  var b = findBoard(u.boardId);
+  if(!b) return "orphan";
+  if(!normVer(u.biosVer)) return "empty";
+  if(!normVer(b.latestVer)) return "unknown";
+  return cmpVer(u.biosVer, b.latestVer) < 0 ? "stale" : "ready";
+}
+function boardReadyUsb(b){
+  var list = state.usbs || [];
+  for(var i=0;i<list.length;i++){
+    if(list[i].boardId === b.id && usbStatus(list[i]) === "ready") return list[i];
+  }
+  return null;
+}
+function usbPendingCount(){
+  var n = 0;
+  state.boards.forEach(function(b){
+    if(boardStatus(b) === "update" && !boardReadyUsb(b)) n++;
+  });
+  return n;
+}
+
+/* ---------- i18n ---------- */
+function applyI18n(){
+  document.documentElement.lang = state.lang;
+  var nodes = document.querySelectorAll("[data-i18n]");
+  for(var i=0;i<nodes.length;i++){
+    nodes[i].textContent = t(nodes[i].getAttribute("data-i18n"));
+  }
+  document.getElementById("langSel").value = state.lang;
+  renderVendorLinks();
+}
+function renderVendorLinks(){
+  var html = "";
+  Object.keys(VENDOR_LINKS).forEach(function(v){
+    html += '<a href="' + VENDOR_LINKS[v] + '" target="_blank" rel="noopener noreferrer">' + esc(v) + "</a>";
+  });
+  document.getElementById("vendorLinks").innerHTML = html;
+}
+
+/* ---------- rendering ---------- */
+function sortedBoards(){
+  var arr = state.boards.slice();
+  var rank = { update: 0, unknown: 1, latest: 2 };
+  if(sortMode === "update"){
+    arr.sort(function(a,b){ return rank[boardStatus(a)] - rank[boardStatus(b)]; });
+  }else if(sortMode === "machine"){
+    arr.sort(function(a,b){ return String(a.machine).localeCompare(String(b.machine)); });
+  }
+  return arr;
+}
+function render(){
+  var boards = state.boards;
+  var counts = { update:0, latest:0, unknown:0 };
+  boards.forEach(function(b){ counts[boardStatus(b)]++; });
+  document.getElementById("statTotal").textContent = boards.length;
+  document.getElementById("statUpdate").textContent = counts.update;
+  document.getElementById("statLatest").textContent = counts.latest;
+  document.getElementById("statUnknown").textContent = counts.unknown;
+  document.getElementById("statUsbPend").textContent = usbPendingCount();
+
+  var empty = document.getElementById("emptyState");
+  var list = document.getElementById("boardList");
+  if(boards.length === 0){
+    empty.style.display = "block";
+    list.innerHTML = "";
+  }else{
+    empty.style.display = "none";
+    list.innerHTML = sortedBoards().map(renderCard).join("");
+  }
+  renderUsbs();
+}
+function renderCard(b){
+  var st = boardStatus(b);
+  var statusLabel = st === "update" ? t("statusUpdate") : (st === "latest" ? t("statusLatest") : t("statusUnknown"));
+  var official = b.dlUrl || VENDOR_LINKS[b.vendor] || "";
+  var basis = t("basis")
+    .replace("{cur}", normVer(b.curVer) || t("unrecorded"))
+    .replace("{latest}", normVer(b.latestVer) || t("unrecorded"));
+  var h = "";
+  h += '<div class="card" data-id="' + esc(b.id) + '">';
+  h += '<div class="card-head">';
+  h += '<div><div class="machine">' + esc(b.machine) + ' <span class="vendor-chip">' + esc(b.vendor) + "</span></div>";
+  h += '<div class="model">' + esc(b.model) + "</div></div>";
+  h += '<div class="badge ' + st + '" data-status="' + st + '">' + esc(statusLabel) + "</div>";
+  h += "</div>";
+  h += '<div class="ver-grid">';
+  h += '<div class="ver-box"><div class="k">' + esc(t("curLabel")) + '</div><div class="v">' + esc(normVer(b.curVer) || t("unrecorded")) + "</div>";
+  if(b.curDate) h += '<div class="d">' + esc(b.curDate) + "</div>";
+  h += "</div>";
+  h += '<div class="ver-box"><div class="k">' + esc(t("latestLabel")) + '</div><div class="v">' + esc(normVer(b.latestVer) || t("unrecorded")) + "</div>";
+  if(b.latestDate) h += '<div class="d">' + esc(b.latestDate) + "</div>";
+  h += "</div></div>";
+  h += '<div class="basis">' + esc(basis) + "</div>";
+  if(st === "update"){
+    var readyUsb = boardReadyUsb(b);
+    if(readyUsb){
+      h += '<div class="usb-line ok" data-usbline="ready">✓ ' + esc(t("boardUsbReady").replace("{name}", readyUsb.name)) + "</div>";
+    }else{
+      h += '<div class="usb-line bad" data-usbline="none">⚠ ' + esc(t("boardUsbNone")) + "</div>";
+    }
+  }
+  if(b.memo) h += '<div class="memo">' + esc(b.memo) + "</div>";
+  h += '<div class="card-actions">';
+  if(official){
+    h += '<a class="btn small official-link" href="' + esc(official) + '" target="_blank" rel="noopener noreferrer" style="text-decoration:none; display:inline-block">' + esc(t("actOfficial")) + "</a>";
+  }
+  if(normVer(b.latestVer)){
+    h += '<button class="btn small" data-act="update">' + esc(t("actUpdate")) + "</button>";
+  }
+  h += '<button class="btn small" data-act="guide">' + esc(t("btnGuide")) + "</button>";
+  h += '<button class="btn small" data-act="history">' + esc(t("actHistory")) + " (" + (b.history ? b.history.length : 0) + ")</button>";
+  h += '<button class="btn small" data-act="edit">' + esc(t("actEdit")) + "</button>";
+  h += '<button class="btn small danger" data-act="del">' + esc(t("actDelete")) + "</button>";
+  h += "</div>";
+  h += '<div class="history' + (openHistory[b.id] ? " open" : "") + '" data-history>';
+  h += "<h4>" + esc(t("histTitle")) + "</h4>";
+  if(b.history && b.history.length){
+    var items = b.history.slice().reverse();
+    items.forEach(function(en){
+      h += '<div class="history-item"><div class="h-top">';
+      h += '<span class="h-date">' + esc(en.date || "") + "</span>";
+      h += '<span class="h-flow">' + esc(en.from || "?") + " → " + esc(en.to || "?") + "</span>";
+      if(en.method) h += '<span class="h-method">' + esc(en.method) + "</span>";
+      h += "</div>";
+      if(en.note) h += '<div class="h-note">' + esc(en.note) + "</div>";
+      h += "</div>";
+    });
+  }else{
+    h += '<div class="history-none">' + esc(t("histNone")) + "</div>";
+  }
+  h += "</div></div>";
+  return h;
+}
+function usbStatusLabel(st){
+  var map = { ready: "usbReady", stale: "usbStale", empty: "usbEmpty", unknown: "usbUnknown", none: "usbNone", orphan: "usbOrphan" };
+  return t(map[st] || "usbNone");
+}
+function renderUsbs(){
+  var usbs = state.usbs || [];
+  var empty = document.getElementById("usbEmpty");
+  var list = document.getElementById("usbList");
+  if(usbs.length === 0){
+    empty.style.display = "block";
+    list.innerHTML = "";
+    return;
+  }
+  empty.style.display = "none";
+  list.innerHTML = usbs.map(renderUsbCard).join("");
+}
+function renderUsbCard(u){
+  var st = usbStatus(u);
+  var b = u.boardId ? findBoard(u.boardId) : null;
+  var h = "";
+  h += '<div class="card" data-usb-id="' + esc(u.id) + '">';
+  h += '<div class="card-head">';
+  h += '<div><div class="machine">💾 ' + esc(u.name);
+  if(u.capacity) h += ' <span class="chip">' + esc(u.capacity) + "</span>";
+  h += u.fat32 === "yes"
+    ? ' <span class="chip">' + esc(t("chipFat32")) + "</span>"
+    : ' <span class="chip warnchip">' + esc(t("chipNoFat32")) + "</span>";
+  h += "</div>";
+  h += '<div class="model">' + (b ? esc(b.machine) + " — " + esc(b.model) : esc(t("chipNoBoard"))) + "</div></div>";
+  h += '<div class="badge ' + st + '" data-usb-status="' + st + '">' + esc(usbStatusLabel(st)) + "</div>";
+  h += "</div>";
+  h += '<div class="ver-grid">';
+  h += '<div class="ver-box"><div class="k">' + esc(t("uFile")) + '</div><div class="v">' + esc(u.fileName || t("usbNoFile")) + "</div>";
+  if(u.prepDate) h += '<div class="d">' + esc(t("uPrepDate")) + ": " + esc(u.prepDate) + "</div>";
+  h += "</div>";
+  h += '<div class="ver-box"><div class="k">' + esc(t("uUsbVer")) + '</div><div class="v">' + esc(normVer(u.biosVer) || t("unrecorded")) + "</div>";
+  h += "</div></div>";
+  if(b){
+    var basis = t("usbBasis")
+      .replace("{board}", b.machine + " / " + b.model)
+      .replace("{uver}", normVer(u.biosVer) || t("unrecorded"))
+      .replace("{latest}", normVer(b.latestVer) || t("unrecorded"));
+    h += '<div class="basis">' + esc(basis) + "</div>";
+  }
+  if(u.memo) h += '<div class="memo">' + esc(u.memo) + "</div>";
+  h += '<div class="card-actions">';
+  if(b) h += '<button class="btn small" data-uact="guide">' + esc(t("btnGuide")) + "</button>";
+  h += '<button class="btn small" data-uact="edit">' + esc(t("actUsbEdit")) + "</button>";
+  h += '<button class="btn small danger" data-uact="del">' + esc(t("actUsbDelete")) + "</button>";
+  h += "</div></div>";
+  return h;
+}
+
+/* ---------- board form ---------- */
+function openBoardForm(prefill){
+  var f = document.getElementById("boardForm");
+  f.reset();
+  document.getElementById("fId").value = "";
+  document.getElementById("boardModalTitle").textContent = t("formAddTitle");
+  if(prefill){
+    if(prefill.id){ document.getElementById("fId").value = prefill.id; document.getElementById("boardModalTitle").textContent = t("formEditTitle"); }
+    if(prefill.machine != null) document.getElementById("fMachine").value = prefill.machine;
+    if(prefill.vendor) document.getElementById("fVendor").value = prefill.vendor;
+    if(prefill.model != null) document.getElementById("fModel").value = prefill.model;
+    if(prefill.curVer != null) document.getElementById("fCurVer").value = prefill.curVer;
+    if(prefill.curDate != null) document.getElementById("fCurDate").value = prefill.curDate;
+    if(prefill.latestVer != null) document.getElementById("fLatestVer").value = prefill.latestVer;
+    if(prefill.latestDate != null) document.getElementById("fLatestDate").value = prefill.latestDate;
+    if(prefill.dlUrl != null) document.getElementById("fDlUrl").value = prefill.dlUrl;
+    if(prefill.memo != null) document.getElementById("fMemo").value = prefill.memo;
+  }
+  document.getElementById("boardModal").classList.add("open");
+}
+function closeBoardForm(){ document.getElementById("boardModal").classList.remove("open"); }
+function findBoard(id){
+  for(var i=0;i<state.boards.length;i++){ if(state.boards[i].id === id) return state.boards[i]; }
+  return null;
+}
+function submitBoardForm(ev){
+  ev.preventDefault();
+  var id = document.getElementById("fId").value;
+  var data = {
+    machine: document.getElementById("fMachine").value.trim(),
+    vendor: document.getElementById("fVendor").value,
+    model: document.getElementById("fModel").value.trim(),
+    curVer: document.getElementById("fCurVer").value.trim(),
+    curDate: document.getElementById("fCurDate").value,
+    latestVer: document.getElementById("fLatestVer").value.trim(),
+    latestDate: document.getElementById("fLatestDate").value,
+    dlUrl: document.getElementById("fDlUrl").value.trim(),
+    memo: document.getElementById("fMemo").value.trim()
+  };
+  if(id && findBoard(id)){
+    var b = findBoard(id);
+    Object.keys(data).forEach(function(k){ b[k] = data[k]; });
+    b.updatedAt = Date.now();
+  }else{
+    data.id = uid();
+    data.history = [];
+    data.createdAt = Date.now();
+    data.updatedAt = Date.now();
+    state.boards.push(data);
+  }
+  saveState();
+  closeBoardForm();
+  render();
+}
+
+/* ---------- update record flow ---------- */
+function buildChecklist(){
+  var wrap = document.getElementById("uChecklist");
+  var labels = t("checks");
+  var h = "";
+  labels.forEach(function(label, i){
+    h += '<label class="check-item" data-check-wrap><input type="checkbox" class="u-check" id="uCheck' + i + '"><span class="ct">' + esc(label) + "</span></label>";
+  });
+  wrap.innerHTML = h;
+  var boxes = wrap.querySelectorAll(".u-check");
+  for(var i=0;i<boxes.length;i++){
+    boxes[i].addEventListener("change", refreshUpdateConfirm);
+  }
+}
+function refreshUpdateConfirm(){
+  var boxes = document.querySelectorAll(".u-check");
+  var all = boxes.length > 0;
+  for(var i=0;i<boxes.length;i++){
+    if(!boxes[i].checked) all = false;
+    boxes[i].closest(".check-item").classList.toggle("checked", boxes[i].checked);
+  }
+  document.getElementById("btnUpdateConfirm").disabled = !all;
+}
+function openUpdate(id){
+  var b = findBoard(id);
+  if(!b || !normVer(b.latestVer)) return;
+  updateTargetId = id;
+  document.getElementById("uBoardName").textContent = b.machine + " — " + b.model;
+  document.getElementById("uFrom").textContent = normVer(b.curVer) || t("unrecorded");
+  document.getElementById("uTo").textContent = normVer(b.latestVer);
+  document.getElementById("uDate").value = todayStr();
+  document.getElementById("uNote").value = "";
+  var boxes = document.querySelectorAll(".u-check");
+  for(var i=0;i<boxes.length;i++){ boxes[i].checked = false; }
+  refreshUpdateConfirm();
+  document.getElementById("updateModal").classList.add("open");
+}
+function closeUpdate(){ document.getElementById("updateModal").classList.remove("open"); updateTargetId = null; }
+function confirmUpdate(){
+  var b = findBoard(updateTargetId);
+  if(!b) return;
+  var from = b.curVer || "";
+  var to = b.latestVer || "";
+  var entry = {
+    date: document.getElementById("uDate").value || todayStr(),
+    from: from,
+    to: to,
+    method: document.getElementById("uMethod").value,
+    note: document.getElementById("uNote").value.trim()
+  };
+  if(!Array.isArray(b.history)) b.history = [];
+  b.history.push(entry);
+  b.curVer = to;
+  if(b.latestDate) b.curDate = b.latestDate;
+  b.updatedAt = Date.now();
+  saveState();
+  closeUpdate();
+  render();
+}
+</script>
+
+<script>
+"use strict";
+/* ---------- collector batch (.bat, ASCII only, CRLF, ends with pause) ---------- */
+function collectorBatText(){
+  var lines = [
+    "@echo off",
+    "rem BIOSMAN info collector",
+    "rem Reads motherboard and BIOS information and writes biosman-info.txt",
+    "rem next to this file. Nothing is sent anywhere.",
+    "setlocal",
+    "set \"BIOSMAN_OUT=%~dp0biosman-info.txt\"",
+    "echo Collecting motherboard and BIOS information...",
+    "powershell -NoProfile -ExecutionPolicy Bypass -Command \"$bb=Get-CimInstance Win32_BaseBoard; $b=Get-CimInstance Win32_BIOS; @('BASEBOARD_MANUFACTURER='+$bb.Manufacturer,'BASEBOARD_PRODUCT='+$bb.Product,'BASEBOARD_VERSION='+$bb.Version,'BIOS_MANUFACTURER='+$b.Manufacturer,'BIOS_VERSION='+$b.SMBIOSBIOSVersion,'BIOS_RELEASEDATE='+$b.ReleaseDate.ToString('yyyy-MM-dd')) | Set-Content -Encoding UTF8 $env:BIOSMAN_OUT\"",
+    "if exist \"%BIOSMAN_OUT%\" (",
+    "  echo Done. Saved to: %BIOSMAN_OUT%",
+    "  echo Paste the contents of biosman-info.txt into BIOSMAN (Import collected text).",
+    ") else (",
+    "  echo Failed to collect information.",
+    ")",
+    "pause",
+    "endlocal",
+    ""
+  ];
+  return lines.join("\r\n");
+}
+function downloadCollector(){
+  var blob = new Blob([collectorBatText()], { type: "text/plain" });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = "biosman-collect.bat";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+}
+
+/* ---------- parse collected text ---------- */
+function detectVendor(manufacturer){
+  var s = String(manufacturer || "").toLowerCase();
+  if(s.indexOf("asustek") >= 0 || s.indexOf("asus") >= 0) return "ASUS";
+  if(s.indexOf("micro-star") >= 0 || s.indexOf("msi") >= 0) return "MSI";
+  if(s.indexOf("gigabyte") >= 0) return "GIGABYTE";
+  if(s.indexOf("asrock") >= 0) return "ASRock";
+  if(s.indexOf("biostar") >= 0) return "Biostar";
+  return "Other";
+}
+function parseCollectedDate(v){
+  var s = String(v || "").trim();
+  var m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return m[1] + "-" + m[2] + "-" + m[3];
+  m = s.match(/^(\d{4})(\d{2})(\d{2})/);
+  if(m) return m[1] + "-" + m[2] + "-" + m[3];
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(m) return m[3] + "-" + m[1].padStart(2,"0") + "-" + m[2].padStart(2,"0");
+  return "";
+}
+function parseCollected(text){
+  var kv = {};
+  String(text || "").split(/\r?\n/).forEach(function(line){
+    var idx = line.indexOf("=");
+    if(idx > 0){
+      var k = line.slice(0, idx).trim().toUpperCase();
+      var v = line.slice(idx + 1).trim().replace(/^\uFEFF/, "");
+      if(k) kv[k] = v;
+    }
+  });
+  var get = function(keys){
+    for(var i=0;i<keys.length;i++){ if(kv[keys[i]]) return kv[keys[i]]; }
+    return "";
+  };
+  var manufacturer = get(["BASEBOARD_MANUFACTURER","MANUFACTURER","BASEBOARDMANUFACTURER"]);
+  var product = get(["BASEBOARD_PRODUCT","PRODUCT","BASEBOARDPRODUCT"]);
+  var biosVer = get(["BIOS_VERSION","SMBIOSBIOSVERSION","BIOSVERSION"]);
+  var biosDate = get(["BIOS_RELEASEDATE","RELEASEDATE","BIOSDATE"]);
+  if(!manufacturer && !product && !biosVer) return null;
+  return {
+    vendor: detectVendor(manufacturer),
+    model: product,
+    curVer: biosVer,
+    curDate: parseCollectedDate(biosDate)
+  };
+}
+function openImport(){ document.getElementById("importModal").classList.add("open"); }
+function closeImport(){ document.getElementById("importModal").classList.remove("open"); }
+function doParseImport(){
+  var parsed = parseCollected(document.getElementById("importText").value);
+  if(!parsed){ alert(t("iParseFail")); return; }
+  parsed.machine = document.getElementById("importMachine").value.trim();
+  closeImport();
+  openBoardForm(parsed);
+}
+
+/* ---------- JSON export / import ---------- */
+function exportJson(){
+  var payload = { app: "BIOSMAN", version: 1, exportedAt: new Date().toISOString(), boards: state.boards, usbs: state.usbs || [] };
+  var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = "biosman-data.json";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+}
+function importJsonFile(file){
+  var reader = new FileReader();
+  reader.onload = function(){
+    try{
+      var parsed = JSON.parse(String(reader.result || ""));
+      var boards = Array.isArray(parsed) ? parsed : parsed.boards;
+      if(!Array.isArray(boards)) throw new Error("bad format");
+      boards.forEach(function(b){
+        if(!b.id) b.id = uid();
+        if(!Array.isArray(b.history)) b.history = [];
+      });
+      var usbs = Array.isArray(parsed.usbs) ? parsed.usbs : [];
+      usbs.forEach(function(u){
+        if(!u.id) u.id = "u" + uid().slice(1);
+      });
+      var msg = t("importConfirm").replace("{cur}", state.boards.length).replace("{n}", boards.length);
+      if(state.boards.length > 0 && !window.confirm(msg)) return;
+      state.boards = boards;
+      state.usbs = usbs;
+      saveState();
+      render();
+      alert(t("importOk").replace("{n}", boards.length));
+    }catch(e){
+      alert(t("importFail"));
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* ---------- USB form ---------- */
+function fillBoardSelect(sel, selectedId){
+  var h = '<option value="">' + esc(t("uBoardNone")) + "</option>";
+  state.boards.forEach(function(b){
+    h += '<option value="' + esc(b.id) + '"' + (b.id === selectedId ? " selected" : "") + ">" +
+      esc(b.machine + " — " + b.model) + "</option>";
+  });
+  sel.innerHTML = h;
+  sel.value = selectedId || "";
+}
+function openUsbForm(prefill){
+  var f = document.getElementById("usbForm");
+  f.reset();
+  document.getElementById("usId").value = "";
+  document.getElementById("usbModalTitle").textContent = t("usbFormAddTitle");
+  fillBoardSelect(document.getElementById("usBoard"), "");
+  document.getElementById("usFat32").value = "no";
+  if(prefill){
+    if(prefill.id){ document.getElementById("usId").value = prefill.id; document.getElementById("usbModalTitle").textContent = t("usbFormEditTitle"); }
+    if(prefill.name != null) document.getElementById("usName").value = prefill.name;
+    if(prefill.capacity != null) document.getElementById("usCapacity").value = prefill.capacity;
+    if(prefill.fat32) document.getElementById("usFat32").value = prefill.fat32;
+    if(prefill.boardId != null) fillBoardSelect(document.getElementById("usBoard"), prefill.boardId);
+    if(prefill.fileName != null) document.getElementById("usFile").value = prefill.fileName;
+    if(prefill.biosVer != null) document.getElementById("usVer").value = prefill.biosVer;
+    if(prefill.prepDate != null) document.getElementById("usDate").value = prefill.prepDate;
+    if(prefill.memo != null) document.getElementById("usMemo").value = prefill.memo;
+  }
+  document.getElementById("usbModal").classList.add("open");
+}
+function closeUsbForm(){ document.getElementById("usbModal").classList.remove("open"); }
+function submitUsbForm(ev){
+  ev.preventDefault();
+  if(!Array.isArray(state.usbs)) state.usbs = [];
+  var id = document.getElementById("usId").value;
+  var data = {
+    name: document.getElementById("usName").value.trim(),
+    capacity: document.getElementById("usCapacity").value.trim(),
+    fat32: document.getElementById("usFat32").value === "yes" ? "yes" : "no",
+    boardId: document.getElementById("usBoard").value,
+    fileName: document.getElementById("usFile").value.trim(),
+    biosVer: document.getElementById("usVer").value.trim(),
+    prepDate: document.getElementById("usDate").value,
+    memo: document.getElementById("usMemo").value.trim()
+  };
+  if(id && findUsb(id)){
+    var u = findUsb(id);
+    Object.keys(data).forEach(function(k){ u[k] = data[k]; });
+    u.updatedAt = Date.now();
+  }else{
+    data.id = "u" + uid().slice(1);
+    data.createdAt = Date.now();
+    data.updatedAt = Date.now();
+    state.usbs.push(data);
+  }
+  saveState();
+  closeUsbForm();
+  render();
+}
+
+/* ---------- USB prep guide ---------- */
+function guideRuleFor(vendor){
+  var rules = t("rules") || {};
+  return rules[vendor] || rules["Other"] || "";
+}
+function guideFileNameFor(vendor){
+  var rf = t("ruleFile") || {};
+  return rf[vendor] || "";
+}
+function renderGuide(){
+  var sel = document.getElementById("gBoard");
+  var body = document.getElementById("guideBody");
+  var recordBtn = document.getElementById("btnGuideRecord");
+  var b = sel.value ? findBoard(sel.value) : null;
+  if(!b){
+    body.innerHTML = '<div class="guide-note">' + esc(t("guideNoBoards")) + "</div>";
+    recordBtn.disabled = true;
+    return;
+  }
+  var vendor = b.vendor || "Other";
+  var fname = guideFileNameFor(vendor);
+  var h = "";
+  h += '<div class="guide-rule"><div style="font-weight:700">' + esc(t("guideRuleTitle").replace("{vendor}", vendor)) + "</div>";
+  h += "<div>" + esc(guideRuleFor(vendor)) + "</div>";
+  h += '<div style="margin-top:8px; color:var(--sub); font-size:12.5px">' + esc(t("guideFileNameLabel")) + "</div>";
+  h += '<div class="fname">' + esc(fname || t("guideAsusName")) + "</div>";
+  if(normVer(b.latestVer)){
+    h += "<div>" + esc(t("guideTargetVer").replace("{ver}", normVer(b.latestVer))) + "</div>";
+  }
+  h += "</div>";
+  if(!normVer(b.latestVer)){
+    h += '<div class="guide-note">' + esc(t("guideNoLatest")) + "</div>";
+  }
+  h += '<div style="font-weight:700; margin-bottom:4px">' + esc(t("guideStepsTitle")) + "</div>";
+  h += '<ol class="guide-steps">';
+  (t("guideSteps") || []).forEach(function(s){ h += "<li>" + esc(s) + "</li>"; });
+  h += "</ol>";
+  h += '<div class="guide-note">' + esc(t("guideNote")) + "</div>";
+  body.innerHTML = h;
+  recordBtn.disabled = !normVer(b.latestVer);
+}
+function openGuide(boardId){
+  var sel = document.getElementById("gBoard");
+  var h = "";
+  state.boards.forEach(function(b){
+    h += '<option value="' + esc(b.id) + '">' + esc(b.machine + " — " + b.model) + "</option>";
+  });
+  sel.innerHTML = h;
+  if(boardId && findBoard(boardId)) sel.value = boardId;
+  renderGuide();
+  document.getElementById("guideModal").classList.add("open");
+}
+function closeGuide(){ document.getElementById("guideModal").classList.remove("open"); }
+function guideRecord(){
+  var sel = document.getElementById("gBoard");
+  var b = sel.value ? findBoard(sel.value) : null;
+  if(!b || !normVer(b.latestVer)) return;
+  closeGuide();
+  openUsbForm({
+    boardId: b.id,
+    fileName: guideFileNameFor(b.vendor),
+    biosVer: b.latestVer,
+    prepDate: todayStr()
+  });
+}
+
+/* ---------- events ---------- */
+document.getElementById("btnAdd").addEventListener("click", function(){ openBoardForm(null); });
+document.getElementById("btnAddFirst").addEventListener("click", function(){ openBoardForm(null); });
+document.getElementById("btnBoardCancel").addEventListener("click", closeBoardForm);
+document.getElementById("boardForm").addEventListener("submit", submitBoardForm);
+document.getElementById("langSel").addEventListener("change", function(ev){
+  state.lang = ev.target.value === "en" ? "en" : "ja";
+  saveState(); applyI18n(); buildChecklist(); render();
+});
+document.getElementById("sortSel").addEventListener("change", function(ev){ sortMode = ev.target.value; render(); });
+document.getElementById("btnCollector").addEventListener("click", downloadCollector);
+document.getElementById("btnExport").addEventListener("click", exportJson);
+document.getElementById("btnImportFileBtn").addEventListener("click", function(){ document.getElementById("fileImport").click(); });
+document.getElementById("fileImport").addEventListener("change", function(ev){
+  if(ev.target.files && ev.target.files[0]) importJsonFile(ev.target.files[0]);
+  ev.target.value = "";
+});
+document.getElementById("btnImportOpen").addEventListener("click", openImport);
+document.getElementById("btnImportFirst").addEventListener("click", openImport);
+document.getElementById("btnImportCancel").addEventListener("click", closeImport);
+document.getElementById("btnImportParse").addEventListener("click", doParseImport);
+document.getElementById("btnUpdateCancel").addEventListener("click", closeUpdate);
+document.getElementById("btnUpdateConfirm").addEventListener("click", confirmUpdate);
+document.getElementById("btnAddUsb").addEventListener("click", function(){ openUsbForm(null); });
+document.getElementById("btnAddUsbFirst").addEventListener("click", function(){ openUsbForm(null); });
+document.getElementById("btnUsbCancel").addEventListener("click", closeUsbForm);
+document.getElementById("usbForm").addEventListener("submit", submitUsbForm);
+document.getElementById("btnGuideOpen").addEventListener("click", function(){ openGuide(null); });
+document.getElementById("btnGuideCancel").addEventListener("click", closeGuide);
+document.getElementById("gBoard").addEventListener("change", renderGuide);
+document.getElementById("btnGuideRecord").addEventListener("click", guideRecord);
+document.getElementById("usbList").addEventListener("click", function(ev){
+  var cardEl = ev.target.closest(".card");
+  if(!cardEl) return;
+  var id = cardEl.getAttribute("data-usb-id");
+  var btn = ev.target.closest("[data-uact]");
+  if(!btn) return;
+  var u = findUsb(id);
+  if(!u) return;
+  var act = btn.getAttribute("data-uact");
+  if(act === "edit"){ openUsbForm(u); }
+  else if(act === "guide"){ if(u.boardId) openGuide(u.boardId); }
+  else if(act === "del"){
+    if(window.confirm(t("confirmDeleteUsb").replace("{name}", u.name))){
+      state.usbs = state.usbs.filter(function(x){ return x.id !== id; });
+      saveState(); render();
+    }
+  }
+});
+document.getElementById("boardList").addEventListener("click", function(ev){
+  var cardEl = ev.target.closest(".card");
+  if(!cardEl) return;
+  var id = cardEl.getAttribute("data-id");
+  var btn = ev.target.closest("[data-act]");
+  if(!btn) return;
+  var act = btn.getAttribute("data-act");
+  var b = findBoard(id);
+  if(!b) return;
+  if(act === "edit"){ openBoardForm(b); }
+  else if(act === "update"){ openUpdate(id); }
+  else if(act === "guide"){ openGuide(id); }
+  else if(act === "history"){
+    openHistory[id] = !openHistory[id];
+    var panel = cardEl.querySelector("[data-history]");
+    if(panel) panel.classList.toggle("open", !!openHistory[id]);
+  }
+  else if(act === "del"){
+    if(window.confirm(t("confirmDelete").replace("{name}", b.machine || b.model))){
+      state.boards = state.boards.filter(function(x){ return x.id !== id; });
+      (state.usbs || []).forEach(function(u){ if(u.boardId === id) u.boardId = ""; });
+      delete openHistory[id];
+      saveState(); render();
+    }
+  }
+});
+["boardModal","updateModal","importModal","usbModal","guideModal"].forEach(function(mid){
+  document.getElementById(mid).addEventListener("click", function(ev){
+    if(ev.target === ev.currentTarget) ev.currentTarget.classList.remove("open");
+  });
+});
+
+/* ---------- init ---------- */
+buildChecklist();
+applyI18n();
+render();
+</script>
+
+<script>
+"use strict";
+/* ================= PC bridge features (desktop .exe only) =================
+   Uses window.biosmanPC when present (Electron shell). In a plain browser
+   the bridge is absent: the scan / version-check buttons stay disabled and
+   an explanation is shown. Everything here is read-only toward USB drives:
+   scanning lists files, it never writes or deletes anything. */
+var scanResults = [];     /* [{ file, est, match }] */
+var scanDone = false;
+var scanError = "";
+var verCandidates = [];   /* [{ boardId, ver }] */
+var newVerFindings = [];  /* [{ boardId, ver, estimated }] */
+var checkRan = false;
+var pcNotified = {};      /* dedupe keys for OS notifications, per session */
+var pcScanning = false;
+var pcChecking = false;
+
+function pcBridge(){
+  var p = window.biosmanPC;
+  return (p && typeof p.scanUSB === "function" && typeof p.fetchText === "function" && typeof p.notify === "function") ? p : null;
+}
+function pcNotify(key, title, body){
+  if(pcNotified[key]) return;
+  pcNotified[key] = 1;
+  var pc = pcBridge();
+  if(pc){
+    try{
+      var r = pc.notify(title, body);
+      if(r && typeof r.catch === "function") r.catch(function(){});
+    }catch(e){ /* notifications are best-effort */ }
+  }
+}
+function fmtSize(n){
+  n = Number(n) || 0;
+  if(n >= 1024 * 1024) return (Math.round(n / (1024 * 1024) * 10) / 10) + " MB";
+  if(n >= 1024) return (Math.round(n / 1024 * 10) / 10) + " KB";
+  return n + " B";
+}
+function fmtMtime(s){
+  var v = String(s || "");
+  return v ? v.replace("T", " ").slice(0, 16) : "";
+}
+
+/* ---------- version estimate from a file name ----------
+   Estimates only — always labelled as such in the UI and editable before
+   anything is recorded. Returns "" when nothing plausible can be read. */
+function estimateVersion(name){
+  var raw = String(name || "");
+  var dot = raw.lastIndexOf(".");
+  var base = dot > 0 ? raw.slice(0, dot) : raw;
+  var ext = dot > 0 ? raw.slice(dot + 1) : "";
+  var containerExts = ["cap", "rom", "bin", "efi", "fd", "bio", "hdr", "wph", "img"];
+  /* MSI / GIGABYTE style: the version is the extension (E7D75AMS.1H0, B650EAORUS.F12) */
+  if(ext && containerExts.indexOf(ext.toLowerCase()) < 0 && /^[A-Za-z]?\d[A-Za-z0-9]{0,3}$/.test(ext)){
+    return ext.toUpperCase();
+  }
+  /* ASUS style: ...-2904.CAP — a trailing 3–5 digit run in the base name */
+  var m = base.match(/[-_](\d{3,5})$/);
+  if(m) return m[1];
+  return "";
+}
+
+/* ---------- matching a scanned file against the registry ---------- */
+function flashVendorFor(name){
+  var lower = String(name || "").toLowerCase();
+  var rf = t("ruleFile") || {};
+  var keys = Object.keys(rf);
+  for(var i = 0; i < keys.length; i++){
+    if(String(rf[keys[i]]).toLowerCase() === lower) return keys[i];
+  }
+  return "";
+}
+function matchScanFile(f){
+  var lower = String(f.name || "").toLowerCase();
+  var rec = null;
+  (state.usbs || []).forEach(function(u){
+    if(!rec && u.fileName && u.fileName.toLowerCase() === lower) rec = u;
+  });
+  if(rec){
+    return { type: "recorded", usb: rec, board: rec.boardId ? findBoard(rec.boardId) : null, candidates: [], flashVendor: flashVendorFor(f.name) };
+  }
+  var fv = flashVendorFor(f.name);
+  var cand = [];
+  var seen = {};
+  function pushCand(b){ if(b && !seen[b.id]){ seen[b.id] = 1; cand.push(b); } }
+  if(fv){
+    state.boards.forEach(function(b){ if(b.vendor === fv) pushCand(b); });
+  }
+  var base = lower.replace(/\.[^.]*$/, "");
+  state.boards.forEach(function(b){
+    var tokens = String(b.model || "").toLowerCase().split(/[^a-z0-9]+/);
+    for(var i = 0; i < tokens.length; i++){
+      if(tokens[i].length >= 4 && base.indexOf(tokens[i]) >= 0){ pushCand(b); break; }
+    }
+  });
+  if(cand.length) return { type: "candidates", usb: null, board: null, candidates: cand, flashVendor: fv };
+  return { type: "unknown", usb: null, board: null, candidates: [], flashVendor: fv };
+}
+
+/* ---------- scan result rendering ---------- */
+function matchCellHtml(r){
+  var m = r.match;
+  if(m.type === "recorded"){
+    var h = '<span class="chip">' + esc(t("matchRecorded")) + "</span>";
+    if(m.board) h += '<div class="scan-sub">' + esc(m.board.machine + " — " + m.board.model) + "</div>";
+    else if(m.usb) h += '<div class="scan-sub">' + esc(m.usb.name) + "</div>";
+    if(m.usb) h += '<div><span class="badge ' + usbStatus(m.usb) + ' scan-badge">' + esc(usbStatusLabel(usbStatus(m.usb))) + "</span></div>";
+    return h;
+  }
+  if(m.type === "candidates"){
+    var names = m.candidates.map(function(b){ return b.machine + " — " + b.model; }).join(" / ");
+    var hh = '<span class="chip warnchip">' + esc(t("matchCandidate")) + "</span>";
+    hh += '<div class="scan-sub">' + esc(names) + "</div>";
+    if(m.flashVendor) hh += '<div class="scan-sub">' + esc(t("matchFlash").replace("{vendor}", m.flashVendor)) + "</div>";
+    return hh;
+  }
+  var uh = '<span class="chip graychip">' + esc(t("matchUnknown")) + "</span>";
+  if(m.flashVendor) uh += '<div class="scan-sub">' + esc(t("matchFlash").replace("{vendor}", m.flashVendor)) + "</div>";
+  return uh;
+}
+function renderScanResults(){
+  var wrap = document.getElementById("scanList");
+  var meta = document.getElementById("scanMeta");
+  if(!scanDone){ wrap.innerHTML = ""; meta.textContent = ""; renderNewVerBanner(); return; }
+  meta.textContent = scanError
+    ? t("scanError").replace("{error}", scanError)
+    : t("scanFound").replace("{n}", scanResults.length);
+  if(!scanResults.length){
+    wrap.innerHTML = '<div class="history-none">' + esc(t("scanNone")) + "</div>";
+    return;
+  }
+  var typed = {};
+  wrap.querySelectorAll("input[data-ver-for]").forEach(function(inp){
+    typed[inp.getAttribute("data-ver-for")] = inp.value;
+  });
+  var h = '<div class="scan-scroll"><table class="scan"><thead><tr>' +
+    "<th>" + esc(t("scanColDrive")) + "</th><th>" + esc(t("scanColFile")) + "</th><th>" + esc(t("scanColSize")) + "</th><th>" + esc(t("scanColMtime")) + "</th><th>" + esc(t("scanColMatch")) + "</th><th>" + esc(t("scanColVer")) + "</th><th></th>" +
+    "</tr></thead><tbody>";
+  scanResults.forEach(function(r, idx){
+    var f = r.file;
+    var key = f.path || ((f.drive || "") + "|" + (f.name || ""));
+    var verVal = (key in typed) ? typed[key]
+      : (r.match.type === "recorded" && r.match.usb ? (r.match.usb.biosVer || "") : r.est);
+    h += '<tr data-scan-idx="' + idx + '">';
+    h += "<td>" + esc(f.drive || "") + "</td>";
+    h += '<td><div class="scan-name">' + esc(f.name) + '</div><div class="scan-path">' + esc(f.path || "") + "</div></td>";
+    h += "<td>" + esc(fmtSize(f.size)) + "</td>";
+    h += "<td>" + esc(fmtMtime(f.mtime)) + "</td>";
+    h += "<td>" + matchCellHtml(r) + "</td>";
+    h += '<td><input class="ver-input" data-ver-for="' + esc(key) + '" value="' + esc(verVal) + '" maxlength="40">';
+    if(r.est) h += '<div class="scan-est">' + esc(t("estLabel")) + ": " + esc(r.est) + "</div>";
+    h += "</td>";
+    h += '<td><button class="btn small" data-sact="record">' + esc(t("btnRecordFile")) + "</button></td>";
+    h += "</tr>";
+  });
+  h += "</tbody></table></div>";
+  wrap.innerHTML = h;
+}
+function renderNewVerBanner(){
+  var el = document.getElementById("newVerBanner");
+  if(!newVerFindings.length){ el.style.display = "none"; el.innerHTML = ""; return; }
+  var h = '<div class="nvb-title">🔔 ' + esc(t("newerBannerTitle")) + "</div>";
+  newVerFindings.forEach(function(f){
+    var b = findBoard(f.boardId);
+    if(!b) return;
+    var line = t("newerLine")
+      .replace("{machine}", b.machine)
+      .replace("{model}", b.model)
+      .replace("{cur}", normVer(b.curVer) || t("unrecorded"))
+      .replace("{ver}", normVer(f.ver));
+    h += '<div class="nvb-line">' + esc(line);
+    if(f.estimated) h += ' <span class="scan-est">(' + esc(t("estLabel")) + ")</span>";
+    h += "</div>";
+  });
+  el.innerHTML = h;
+  el.style.display = "block";
+}
+
+/* ---------- newer-version check over the scan results ---------- */
+function rowVersion(r, idx){
+  var inp = document.querySelector('tr[data-scan-idx="' + idx + '"] input[data-ver-for]');
+  if(inp) return inp.value.trim();
+  if(r.match.type === "recorded" && r.match.usb) return r.match.usb.biosVer || "";
+  return r.est || "";
+}
+function checkUsbNewer(allowNotify){
+  newVerFindings = [];
+  var seenBoard = {};
+  scanResults.forEach(function(r, idx){
+    var b = null;
+    if(r.match.type === "recorded") b = r.match.board;
+    else if(r.match.type === "candidates" && r.match.candidates.length === 1) b = r.match.candidates[0];
+    if(!b || seenBoard[b.id]) return;
+    var ver = rowVersion(r, idx);
+    if(!normVer(ver) || !normVer(b.curVer)) return;
+    if(cmpVer(ver, b.curVer) > 0){
+      seenBoard[b.id] = 1;
+      var isRecordedVer = r.match.type === "recorded" && r.match.usb && normVer(r.match.usb.biosVer) === normVer(ver);
+      newVerFindings.push({ boardId: b.id, ver: normVer(ver), estimated: !isRecordedVer });
+      /* OS notifications are only sent for confirmed values (a version the
+         user already recorded in the USB registry), and only as a result of
+         an explicit scan — bookkeeping edits refresh the banner silently.
+         Estimates from file names appear in the in-page banner, labelled. */
+      if(isRecordedVer && allowNotify){
+        pcNotify("usb|" + b.id + "|" + normVer(ver), t("notifyTitle"),
+          t("newerLine")
+            .replace("{machine}", b.machine)
+            .replace("{model}", b.model)
+            .replace("{cur}", normVer(b.curVer))
+            .replace("{ver}", normVer(ver)));
+      }
+    }
+  });
+}
+function refreshScanMatches(){
+  if(!scanDone) return;
+  scanResults.forEach(function(r){ r.match = matchScanFile(r.file); });
+  renderScanResults();
+  checkUsbNewer(false);
+  renderNewVerBanner();
+}
+
+/* ---------- "Scan USB drives" ---------- */
+function doScanUsb(){
+  var pc = pcBridge();
+  if(!pc || pcScanning) return;
+  pcScanning = true;
+  var btn = document.getElementById("btnScanUsb");
+  btn.disabled = true;
+  btn.textContent = t("scanBusy");
+  pc.scanUSB().then(function(res){
+    scanError = res && res.error ? String(res.error) : "";
+    var files = res && Array.isArray(res.files) ? res.files : [];
+    scanResults = files.map(function(f){
+      return { file: f, est: estimateVersion(f.name), match: matchScanFile(f) };
+    });
+    scanDone = true;
+  }).catch(function(e){
+    scanError = String((e && e.message) || e);
+    scanResults = [];
+    scanDone = true;
+  }).then(function(){
+    pcScanning = false;
+    btn.disabled = false;
+    btn.textContent = t("btnScanUsb");
+    renderScanResults();
+    checkUsbNewer(true);
+    renderNewVerBanner();
+  });
+}
+
+/* ---------- version candidates from an official page ----------
+   Heuristic extraction only. Page layouts differ per vendor, so a human
+   always confirms a candidate before it is recorded as the latest. */
+function extractVersionCandidates(html){
+  var text = String(html || "")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ");
+  var found = {};
+  var order = [];
+  function add(v){
+    v = normVer(String(v || "").trim().replace(/[.,;:]$/, ""));
+    if(!v || v.length > 16 || !/\d/.test(v)) return;
+    var k = v.toLowerCase();
+    if(!(k in found)){ found[k] = v; order.push(v); }
+  }
+  var m;
+  var reLabel = /(?:BIOS\s*)?(?:Version|Ver\.?)\s*[:#]?\s*([0-9][0-9A-Za-z.\-]{0,14}|[A-Za-z][0-9][0-9A-Za-z.\-]{0,10})/gi;
+  while((m = reLabel.exec(text)) !== null) add(m[1]);
+  var reExt = /[A-Za-z0-9_\-]{3,}\.((?:F|f)\d{1,2}[a-z]?|\d[A-Za-z0-9]{1,3})\b/g;
+  while((m = reExt.exec(text)) !== null) add(m[1]);
+  var reCap = /[A-Za-z0-9_\-]*?[-_](\d{3,5})\.(?:CAP|cap)\b/g;
+  while((m = reCap.exec(text)) !== null) add(m[1]);
+  return order;
+}
+function renderCheckMeta(errors, note){
+  var el = document.getElementById("checkMeta");
+  var h = "";
+  (errors || []).forEach(function(e){ h += '<div class="warn-text">' + esc(e) + "</div>"; });
+  if(note) h += '<div class="basis">' + esc(note) + "</div>";
+  el.innerHTML = h;
+}
+function renderCandidates(){
+  var wrap = document.getElementById("candidateList");
+  if(!verCandidates.length){
+    wrap.innerHTML = checkRan ? '<div class="history-none" style="margin-top:8px">' + esc(t("candNone")) + "</div>" : "";
+    return;
+  }
+  var byBoard = {};
+  var order = [];
+  verCandidates.forEach(function(c){
+    if(!byBoard[c.boardId]){ byBoard[c.boardId] = []; order.push(c.boardId); }
+    byBoard[c.boardId].push(c.ver);
+  });
+  var h = '<div class="cand-head">' + esc(t("candTitle")) + "</div>";
+  h += '<div class="guide-note" style="margin:0 0 10px">' + esc(t("candNote")) + "</div>";
+  order.forEach(function(bid){
+    var b = findBoard(bid);
+    if(!b) return;
+    h += '<div class="scan-sub" style="margin:10px 0 6px; font-weight:700; color:var(--text); font-size:13.5px">' +
+      esc(t("candFor").replace("{machine}", b.machine).replace("{model}", b.model)) + "</div>";
+    byBoard[bid].forEach(function(v){
+      var basis = t("basis")
+        .replace("{cur}", normVer(b.curVer) || t("unrecorded"))
+        .replace("{latest}", normVer(b.latestVer) || t("unrecorded"));
+      h += '<div class="cand-row"><span class="cand-ver">' + esc(v) + '</span>' +
+        '<span class="scan-sub" style="margin-top:0">' + esc(basis) + "</span>" +
+        '<span style="flex:1"></span>' +
+        '<button class="btn small primary" data-cact="record" data-board="' + esc(bid) + '" data-ver="' + esc(v) + '">' + esc(t("btnRecordLatest")) + "</button></div>";
+    });
+  });
+  wrap.innerHTML = h;
+}
+
+/* ---------- "Check for newer versions" ---------- */
+function doCheckVersions(){
+  var pc = pcBridge();
+  if(!pc || pcChecking) return;
+  var targets = state.boards.filter(function(b){ return !!b.dlUrl; });
+  if(!targets.length){
+    checkRan = true;
+    renderCheckMeta([], t("checkNoUrl"));
+    renderCandidates();
+    return;
+  }
+  pcChecking = true;
+  checkRan = true;
+  var btn = document.getElementById("btnCheckVer");
+  btn.disabled = true;
+  btn.textContent = t("checkBusyLabel");
+  var errors = [];
+  var chain = Promise.resolve();
+  targets.forEach(function(b){
+    chain = chain.then(function(){
+      return pc.fetchText(b.dlUrl).then(function(res){
+        if(!res || !res.ok){
+          errors.push(t("checkFail")
+            .replace("{board}", b.machine + " — " + b.model)
+            .replace("{error}", (res && (res.error || ("HTTP " + res.status))) || "unknown"));
+          return;
+        }
+        var base = normVer(b.latestVer) || normVer(b.curVer);
+        var cands = extractVersionCandidates(res.text);
+        if(!base){
+          cands.sort(function(x, y){ return cmpVer(y, x); });
+          cands = cands.slice(0, 6);
+        }
+        cands.forEach(function(v){
+          if(base && cmpVer(v, base) <= 0) return;
+          var exists = verCandidates.some(function(c){ return c.boardId === b.id && c.ver === v; });
+          if(exists) return;
+          verCandidates.push({ boardId: b.id, ver: v });
+          pcNotify("web|" + b.id + "|" + normVer(v), t("notifyTitle"),
+            t("candNotify")
+              .replace("{machine}", b.machine)
+              .replace("{model}", b.model)
+              .replace("{ver}", v));
+        });
+      }).catch(function(e){
+        errors.push(t("checkFail")
+          .replace("{board}", b.machine + " — " + b.model)
+          .replace("{error}", String((e && e.message) || e)));
+      });
+    });
+  });
+  chain.then(function(){
+    pcChecking = false;
+    btn.disabled = false;
+    btn.textContent = t("btnCheckVer");
+    renderCheckMeta(errors);
+    renderCandidates();
+  });
+}
+
+/* ---------- pc panel events ---------- */
+document.getElementById("btnScanUsb").addEventListener("click", doScanUsb);
+document.getElementById("btnCheckVer").addEventListener("click", doCheckVersions);
+document.getElementById("scanList").addEventListener("click", function(ev){
+  var btn = ev.target.closest("[data-sact]");
+  if(!btn) return;
+  var tr = btn.closest("tr[data-scan-idx]");
+  if(!tr) return;
+  var r = scanResults[Number(tr.getAttribute("data-scan-idx"))];
+  if(!r) return;
+  var inp = tr.querySelector("input[data-ver-for]");
+  var ver = inp ? inp.value.trim() : "";
+  var prefill = {
+    boardId: "",
+    fileName: r.file.name,
+    biosVer: ver,
+    prepDate: /^\d{4}-\d{2}-\d{2}$/.test(String(r.file.mtime || "").slice(0, 10)) ? String(r.file.mtime).slice(0, 10) : todayStr()
+  };
+  if(r.match.type === "recorded" && r.match.usb){
+    var u = r.match.usb;
+    prefill.id = u.id;
+    prefill.name = u.name;
+    prefill.capacity = u.capacity;
+    prefill.fat32 = u.fat32;
+    prefill.memo = u.memo;
+    prefill.boardId = u.boardId || "";
+  }else{
+    prefill.name = t("scanUsbName").replace("{drive}", r.file.drive || "USB");
+    prefill.memo = r.file.path || "";
+    if(r.match.type === "candidates" && r.match.candidates.length === 1) prefill.boardId = r.match.candidates[0].id;
+  }
+  openUsbForm(prefill);
+});
+document.getElementById("candidateList").addEventListener("click", function(ev){
+  var btn = ev.target.closest("[data-cact]");
+  if(!btn) return;
+  var bid = btn.getAttribute("data-board");
+  var ver = btn.getAttribute("data-ver");
+  var b = findBoard(bid);
+  if(!b || !ver) return;
+  b.latestVer = ver;
+  b.updatedAt = Date.now();
+  saveState();
+  render();
+  verCandidates = verCandidates.filter(function(c){ return !(c.boardId === bid && c.ver === ver); });
+  renderCheckMeta([], t("recordedLatest").replace("{machine}", b.machine).replace("{ver}", ver));
+  renderCandidates();
+});
+document.getElementById("usbForm").addEventListener("submit", function(){
+  /* Registered after the built-in submit handler, so the record is already
+     saved when this runs: refresh the scan matches against the new data. */
+  refreshScanMatches();
+});
+document.getElementById("langSel").addEventListener("change", function(){
+  initPcPanel();
+  renderScanResults();
+  renderNewVerBanner();
+  renderCandidates();
+});
+
+/* ---------- pc panel init ---------- */
+function initPcPanel(){
+  var avail = !!pcBridge();
+  document.getElementById("pcUnavailable").style.display = avail ? "none" : "block";
+  document.getElementById("pcState").textContent = avail ? t("pcOn") : t("pcOff");
+  document.getElementById("btnScanUsb").disabled = !avail;
+  document.getElementById("btnCheckVer").disabled = !avail;
+}
+initPcPanel();
+</script>
+</body>
+</html>
