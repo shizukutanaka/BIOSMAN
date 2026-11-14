@@ -114,6 +114,11 @@ section.usbsec{margin-top:28px}
 .ver-box .d{color:var(--sub); font-size:12px}
 .basis{color:var(--faint); font-size:12px; margin-top:8px}
 .memo{color:var(--sub); font-size:13px; margin-top:8px; white-space:pre-wrap; word-break:break-word}
+.recovery{margin-top:10px; background:var(--bg2); border:1px solid var(--line); border-radius:10px; padding:10px 12px; font-size:13px}
+.recovery .r-title{font-weight:800; font-size:12.5px; color:var(--sub); letter-spacing:.4px}
+.recovery .r-line{margin-top:3px; font-weight:600}
+.recovery .r-note{color:var(--sub); margin-top:4px; white-space:pre-wrap; word-break:break-word}
+.recovery .r-ladder{color:var(--faint); font-size:12px; margin-top:6px}
 .card-actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:14px}
 .history{display:none; margin-top:12px; border-top:1px solid var(--line); padding-top:10px}
 .history.open{display:block}
@@ -303,6 +308,8 @@ table.scan th{color:var(--sub); font-size:12px}
     <div data-i18n="helpCollectBody"></div>
     <h3 data-i18n="helpUsbTitle"></h3>
     <div data-i18n="helpUsbBody"></div>
+    <h3 data-i18n="helpCautionTitle"></h3>
+    <div data-i18n="helpCautionBody"></div>
     <h3 data-i18n="helpPcTitle"></h3>
     <div data-i18n="helpPcBody"></div>
     <h3 data-i18n="helpDataTitle"></h3>
@@ -340,6 +347,11 @@ table.scan th{color:var(--sub); font-size:12px}
         <input id="fModel" required maxlength="120">
         <div class="hint" data-i18n="fModelHint"></div>
       </div>
+      <div class="field">
+        <label for="fRevision" data-i18n="fRevision"></label>
+        <input id="fRevision" maxlength="40" placeholder="Rev 1.0">
+        <div class="hint" data-i18n="fRevisionHint"></div>
+      </div>
       <div class="frow">
         <div class="field">
           <label for="fCurVer" data-i18n="fCurVer"></label>
@@ -364,6 +376,32 @@ table.scan th{color:var(--sub); font-size:12px}
         <label for="fDlUrl" data-i18n="fDlUrl"></label>
         <input id="fDlUrl" type="url" maxlength="500" placeholder="https://">
         <div class="hint" data-i18n="fDlUrlHint"></div>
+      </div>
+      <div class="field" style="margin-bottom:6px">
+        <label data-i18n="fRecoveryTitle"></label>
+      </div>
+      <div class="frow">
+        <div class="field">
+          <label for="fFlashback" data-i18n="fFlashback"></label>
+          <select id="fFlashback">
+            <option value="" data-i18n="recOptUnknown"></option>
+            <option value="yes" data-i18n="recOptYes"></option>
+            <option value="no" data-i18n="recOptNo"></option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fDualBios" data-i18n="fDualBios"></label>
+          <select id="fDualBios">
+            <option value="" data-i18n="recOptUnknown"></option>
+            <option value="yes" data-i18n="recOptYes"></option>
+            <option value="no" data-i18n="recOptNo"></option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="fRecoveryNote" data-i18n="fRecoveryNote"></label>
+        <textarea id="fRecoveryNote" maxlength="1000"></textarea>
+        <div class="hint" data-i18n="fRecoveryNoteHint"></div>
       </div>
       <div class="field">
         <label for="fMemo" data-i18n="fMemo"></label>
@@ -409,6 +447,7 @@ table.scan th{color:var(--sub); font-size:12px}
       <textarea id="uNote" maxlength="500"></textarea>
     </div>
     <div class="warn-text" data-i18n="uWarn"></div>
+    <div class="warn-text" style="margin-top:8px" data-i18n="waitNote"></div>
     <div class="modal-actions">
       <button type="button" class="btn" id="btnUpdateCancel" data-i18n="cancel"></button>
       <button type="button" class="btn primary" id="btnUpdateConfirm" disabled data-i18n="uConfirm"></button>
@@ -562,13 +601,25 @@ ja: {
   fVendor: "ベンダー",
   vendorOther: "その他",
   fModel: "モデル名",
-  fModelHint: "基板に印字された正式名称とリビジョン（例: Rev 1.0）をそのまま書いてください。",
+  fModelHint: "基板に印字された正式名称をそのまま書いてください。",
+  fRevision: "基板リビジョン（Rev）",
+  fRevisionHint: "基板に印字された Rev（例: 1.0）。同じモデル名でもリビジョンが違うと BIOS ファイルが異なることがあります。",
   fCurVer: "現在の BIOS バージョン",
   fCurDate: "現在の BIOS 日付",
   fLatestVer: "最新と知っているバージョン",
   fLatestDate: "最新版の日付",
   fDlUrl: "このボードの公式ダウンロード URL（任意）",
   fDlUrlHint: "そのモデルの公式サポートページ。空欄ならベンダーのダウンロードセンターにリンクします。",
+  fRecoveryTitle: "復旧手段（更新に失敗したときに使う）",
+  fFlashback: "USB Flashback ボタン",
+  fDualBios: "デュアル BIOS",
+  recOptUnknown: "未確認",
+  recOptYes: "あり",
+  recOptNo: "なし",
+  fRecoveryNote: "復旧手順メモ",
+  fRecoveryNoteHint: "Flashback 用の専用 USB ポートの位置、復旧ジャンパの場所、手順などを書いておくと、事故のときにすぐ引けます。",
+  recTitle: "復旧手段",
+  recLadder: "復旧の順序: USB Flashback → デュアル BIOS 切替 → 復旧ジャンパ → 販売店・メーカーでの SPI 書き直し",
   fMemo: "メモ",
   cancel: "キャンセル",
   save: "保存",
@@ -594,17 +645,19 @@ ja: {
   uDate: "更新日",
   uNote: "結果メモ",
   uWarn: "書き換え中に電源を切るとマザーボードが起動しなくなることがあります。チェックリストを満たしたときだけ記録してください。",
+  waitNote: "更新中・直後の注意: 進捗が 99% や数分間止まって見えても、書き換え処理は続いていることがあります。その間に電源を切ったり再起動したりしないでください。再起動直後の黒画面はメモリートレーニング（30 秒〜2 分）の正常な動作です。焦って電源を切ることが、起動不能の主な原因のひとつです。",
   uConfirm: "更新を記録する",
   checks: [
     "モデル名とリビジョンが、ダウンロードページと完全一致している",
     "電源が安定している（ノートPCはAC接続／デスクトップは作業中に停電しない見込み）",
     "BitLocker の回復キーを控え、保護を一時停止した",
     "現在の BIOS 設定を記録した（写真・書き出し）",
+    "最適化デフォルト（Load Optimized Defaults）を読み込み、XMP/EXPO や電圧チューニングを解除した",
     "ファイルはベンダーの公式ページから入手した",
     "書き換え中は絶対に電源を切らない",
   ],
   iTitle: "収集テキストの取り込み",
-  iSub: "biosman-info.txt の内容を貼り付けると、ベンダー・モデル・現在の BIOS バージョンと日付を読み取って登録フォームを開きます。",
+  iSub: "biosman-info.txt の内容を貼り付けると、ベンダー・モデル・リビジョン・現在の BIOS バージョンと日付を読み取って登録フォームを開きます。",
   iTextLabel: "biosman-info.txt の内容",
   iParse: "読み取ってフォームを開く",
   iParseFail: "読み取れる項目がありませんでした。KEY=VALUE 形式のテキストを貼り付けてください。",
@@ -716,6 +769,8 @@ ja: {
   btnRecordLatest: "最新として記録",
   candNone: "新しい版数の候補は見つかりませんでした。",
   recordedLatest: "{machine} の最新バージョンに {ver} を記録しました。",
+  helpCautionTitle: "更新中・直後の注意（起動不能を防ぐ）",
+  helpCautionBody: "書き換えの進捗が 99% や数分間止まって見えても、処理は続いていることがあります。その間は電源を切ったり再起動したりしないでください。再起動直後に画面が真っ暗なままの時間（メモリートレーニング、30 秒〜2 分）は正常な動作です。焦って電源を切ることが、起動不能の主な原因のひとつです。また更新の前には、最適化デフォルト（Load Optimized Defaults）を読み込んで XMP/EXPO や電圧チューニングを解除しておくことも、失敗を防ぐ基本です。万が一に備え、各ボードの「復旧手段」（USB Flashback の有無、デュアル BIOS、復旧手順メモ）を編集画面で記録しておくと、事故のときに復旧の順序をすぐ確認できます。",
   helpPcTitle: "PC 連携（実行ファイル版のみ）",
   helpPcBody: "実行ファイル版（BIOSMAN.exe）では、接続中の USB メモリを読み取り専用で走査し、中の BIOS ファイルを台帳と照合して一覧表示できます。ファイル名から版数を推定できる場合は「推定」と明示して候補を出し、記録前に直せます。USB 内の版数がボードの現在バージョンより新しいものがあれば通知します。また、公式ダウンロード URL が登録されたボードについては公式ページを取得し、新しい版数の候補を提示します。候補は推定であり、記録は必ず人が確認してから行います。USB への書き込みや削除は一切しません。",
 },
@@ -753,13 +808,25 @@ en: {
   fVendor: "Vendor",
   vendorOther: "Other",
   fModel: "Model name",
-  fModelHint: "Write the exact name and revision printed on the board (e.g. Rev 1.0).",
+  fModelHint: "Write the exact model name printed on the board.",
+  fRevision: "Board revision (Rev)",
+  fRevisionHint: "The Rev printed on the board (e.g. 1.0). Boards with the same model name but a different revision may need a different BIOS file.",
   fCurVer: "Current BIOS version",
   fCurDate: "Current BIOS date",
   fLatestVer: "Latest known version",
   fLatestDate: "Latest version date",
   fDlUrl: "Official download URL for this board (optional)",
   fDlUrlHint: "The official support page for this model. If blank, links to the vendor download center.",
+  fRecoveryTitle: "Recovery options (for when an update fails)",
+  fFlashback: "USB Flashback button",
+  fDualBios: "Dual BIOS",
+  recOptUnknown: "Not checked",
+  recOptYes: "Yes",
+  recOptNo: "No",
+  fRecoveryNote: "Recovery notes",
+  fRecoveryNoteHint: "Which USB port is the Flashback port, where the recovery jumper is, the steps — anything you would want at hand in an emergency.",
+  recTitle: "RECOVERY",
+  recLadder: "Recovery ladder: USB Flashback → dual-BIOS switch → recovery jumper → SPI reflash at a shop / the vendor",
   fMemo: "Notes",
   cancel: "Cancel",
   save: "Save",
@@ -785,17 +852,19 @@ en: {
   uDate: "Update date",
   uNote: "Result notes",
   uWarn: "Cutting power during a BIOS update can leave the motherboard unable to boot. Only record the update once every checklist item is truly done.",
+  waitNote: "During and right after the update: even if progress seems stuck at 99% or frozen for minutes, the update is usually still running — never cut the power or reboot in the meantime. A black screen right after the reboot is memory training (30 seconds to 2 minutes) and is normal. Cutting power in a panic is one of the main causes of a board that no longer boots.",
   uConfirm: "Record update",
   checks: [
     "The model name and revision exactly match the download page",
     "Power is stable (laptop on AC power / no outage expected during the update)",
     "BitLocker recovery key is saved and protection has been suspended",
     "Current BIOS settings have been recorded (photo or export)",
+    "Loaded Optimized Defaults and cleared tuning (XMP/EXPO, voltage tweaks) before updating",
     "The file was obtained from the vendor's official page",
     "I will never turn off the power during the update",
   ],
   iTitle: "Import collected text",
-  iSub: "Paste the contents of biosman-info.txt and BIOSMAN reads the vendor, model, current BIOS version and date, then opens the registration form.",
+  iSub: "Paste the contents of biosman-info.txt and BIOSMAN reads the vendor, model, revision, current BIOS version and date, then opens the registration form.",
   iTextLabel: "Contents of biosman-info.txt",
   iParse: "Parse and open the form",
   iParseFail: "Nothing readable was found. Paste KEY=VALUE text.",
@@ -907,6 +976,8 @@ en: {
   btnRecordLatest: "Record as latest",
   candNone: "No newer version candidates were found.",
   recordedLatest: "Recorded {ver} as the latest version for {machine}.",
+  helpCautionTitle: "Cautions during and after an update (avoid a bricked board)",
+  helpCautionBody: "Even if progress seems stuck at 99% or frozen for minutes, the update is usually still running — never cut the power or reboot in the meantime. A black screen right after the reboot (memory training, 30 seconds to 2 minutes) is normal. Cutting power in a panic is one of the main causes of a board that no longer boots. Loading Optimized Defaults beforehand to clear XMP/EXPO and voltage tuning is another basic safeguard. For emergencies, record each board's recovery options (USB Flashback, dual BIOS, recovery notes) in the Edit form so the recovery order is at hand when you need it.",
   helpPcTitle: "PC integration (desktop app only)",
   helpPcBody: "In the desktop app (BIOSMAN.exe), BIOSMAN scans connected USB drives read-only, lists the BIOS files it finds, and matches them against the registry. When a version can be estimated from a file name it is labelled as an estimate and can be corrected before recording. You are notified when a USB drive holds a BIOS newer than a board's installed version. For boards with a recorded official download URL, the official page is fetched and newer-version candidates are presented. Candidates are estimates; recording always requires your confirmation. USB drives are never written to or deleted from.",
 }
@@ -990,6 +1061,12 @@ function boardStatus(b){
   if(!normVer(b.latestVer)) return "unknown";
   var c = cmpVer(b.curVer || "", b.latestVer);
   return c < 0 ? "update" : "latest";
+}
+/* Revision display: stored verbatim (users and the collector may write
+   "1.0" or "Rev 1.0"); shown canonically as "Rev X" without doubling. */
+function revDisp(rev){
+  var s = String(rev == null ? "" : rev).trim().replace(/^rev\.?\s*/i, "");
+  return s ? "Rev " + s : "";
 }
 
 /* ---------- USB drives ---------- 
@@ -1083,7 +1160,9 @@ function renderCard(b){
   h += '<div class="card" data-id="' + esc(b.id) + '">';
   h += '<div class="card-head">';
   h += '<div><div class="machine">' + esc(b.machine) + ' <span class="vendor-chip">' + esc(b.vendor) + "</span></div>";
-  h += '<div class="model">' + esc(b.model) + "</div></div>";
+  h += '<div class="model">' + esc(b.model);
+  if(revDisp(b.revision)) h += ' <span class="chip">' + esc(revDisp(b.revision)) + "</span>";
+  h += "</div></div>";
   h += '<div class="badge ' + st + '" data-status="' + st + '">' + esc(statusLabel) + "</div>";
   h += "</div>";
   h += '<div class="ver-grid">';
@@ -1103,6 +1182,17 @@ function renderCard(b){
     }
   }
   if(b.memo) h += '<div class="memo">' + esc(b.memo) + "</div>";
+  var recParts = [];
+  if(b.flashback) recParts.push(t("fFlashback") + ": " + (b.flashback === "yes" ? t("recOptYes") : t("recOptNo")));
+  if(b.dualBios) recParts.push(t("fDualBios") + ": " + (b.dualBios === "yes" ? t("recOptYes") : t("recOptNo")));
+  if(recParts.length || b.recoveryNote){
+    h += '<div class="recovery" data-recovery>';
+    h += '<div class="r-title">' + esc(t("recTitle")) + "</div>";
+    if(recParts.length) h += '<div class="r-line">' + esc(recParts.join(" / ")) + "</div>";
+    if(b.recoveryNote) h += '<div class="r-note">' + esc(b.recoveryNote) + "</div>";
+    h += '<div class="r-ladder">' + esc(t("recLadder")) + "</div>";
+    h += "</div>";
+  }
   h += '<div class="card-actions">';
   if(official){
     h += '<a class="btn small official-link" href="' + esc(official) + '" target="_blank" rel="noopener noreferrer" style="text-decoration:none; display:inline-block">' + esc(t("actOfficial")) + "</a>";
@@ -1198,6 +1288,10 @@ function openBoardForm(prefill){
     if(prefill.machine != null) document.getElementById("fMachine").value = prefill.machine;
     if(prefill.vendor) document.getElementById("fVendor").value = prefill.vendor;
     if(prefill.model != null) document.getElementById("fModel").value = prefill.model;
+    if(prefill.revision != null) document.getElementById("fRevision").value = prefill.revision;
+    if(prefill.flashback != null) document.getElementById("fFlashback").value = prefill.flashback;
+    if(prefill.dualBios != null) document.getElementById("fDualBios").value = prefill.dualBios;
+    if(prefill.recoveryNote != null) document.getElementById("fRecoveryNote").value = prefill.recoveryNote;
     if(prefill.curVer != null) document.getElementById("fCurVer").value = prefill.curVer;
     if(prefill.curDate != null) document.getElementById("fCurDate").value = prefill.curDate;
     if(prefill.latestVer != null) document.getElementById("fLatestVer").value = prefill.latestVer;
@@ -1219,6 +1313,10 @@ function submitBoardForm(ev){
     machine: document.getElementById("fMachine").value.trim(),
     vendor: document.getElementById("fVendor").value,
     model: document.getElementById("fModel").value.trim(),
+    revision: document.getElementById("fRevision").value.trim(),
+    flashback: document.getElementById("fFlashback").value,
+    dualBios: document.getElementById("fDualBios").value,
+    recoveryNote: document.getElementById("fRecoveryNote").value.trim(),
     curVer: document.getElementById("fCurVer").value.trim(),
     curDate: document.getElementById("fCurDate").value,
     latestVer: document.getElementById("fLatestVer").value.trim(),
@@ -1269,7 +1367,7 @@ function openUpdate(id){
   var b = findBoard(id);
   if(!b || !normVer(b.latestVer)) return;
   updateTargetId = id;
-  document.getElementById("uBoardName").textContent = b.machine + " — " + b.model;
+  document.getElementById("uBoardName").textContent = b.machine + " — " + b.model + (revDisp(b.revision) ? " (" + revDisp(b.revision) + ")" : "");
   document.getElementById("uFrom").textContent = normVer(b.curVer) || t("unrecorded");
   document.getElementById("uTo").textContent = normVer(b.latestVer);
   document.getElementById("uDate").value = todayStr();
@@ -1376,12 +1474,14 @@ function parseCollected(text){
   };
   var manufacturer = get(["BASEBOARD_MANUFACTURER","MANUFACTURER","BASEBOARDMANUFACTURER"]);
   var product = get(["BASEBOARD_PRODUCT","PRODUCT","BASEBOARDPRODUCT"]);
+  var baseboardVer = get(["BASEBOARD_VERSION","BASEBOARD_REV","REVISION"]);
   var biosVer = get(["BIOS_VERSION","SMBIOSBIOSVERSION","BIOSVERSION"]);
   var biosDate = get(["BIOS_RELEASEDATE","RELEASEDATE","BIOSDATE"]);
   if(!manufacturer && !product && !biosVer) return null;
   return {
     vendor: detectVendor(manufacturer),
     model: product,
+    revision: baseboardVer,
     curVer: biosVer,
     curDate: parseCollectedDate(biosDate)
   };
@@ -1535,6 +1635,7 @@ function renderGuide(){
   h += '<ol class="guide-steps">';
   (t("guideSteps") || []).forEach(function(s){ h += "<li>" + esc(s) + "</li>"; });
   h += "</ol>";
+  h += '<div class="guide-note">' + esc(t("waitNote")) + "</div>";
   h += '<div class="guide-note">' + esc(t("guideNote")) + "</div>";
   body.innerHTML = h;
   recordBtn.disabled = !normVer(b.latestVer);
