@@ -4,6 +4,8 @@ A ledger app for managing and updating the BIOS of multiple PC motherboards: whi
 
 複数台の PC マザーボードについて、「どのマシンに・どのボードが・どの BIOS バージョンで載っていて・最新版が出ているか・いつ更新したか」を一元管理する台帳アプリです。
 
+![BIOSMAN screenshot — motherboard ledger with BIOS version status and update availability (sample entries)](docs/images/screenshot.png)
+
 ## Download / 入手方法
 
 Get the latest build from [Releases](../../releases):
