@@ -27,6 +27,8 @@ Releases から最新版を入手してください。`BIOSMAN-Windows.zip` は 
   **USB 台帳と準備ガイド** — どの USB に・どのボード用の・どのバージョンのファイルが入っているかを台帳で管理し、「準備OK」「古い（作り直し）」「USB 未準備」を自動判定します。ベンダーごとのファイル命名規則と準備手順のガイド付き（最終確認は必ずマザーボードのマニュアルで）。
 - **USB scan and new-version notification (executable edition)** — The Windows executable can actually look inside the USB drives connected to your PC, list the BIOS files it finds, and match them against your ledger. If it finds a version newer than what a board currently runs, it notifies you. It can also check the official download pages you registered and present newer versions it finds there as *candidates*.
   **USB 実走査と新しい版数の通知（実行ファイル版）** — PC に挿さっている USB を実際に読み取り、BIOS ファイルをリスト化して台帳と照合します。現在のバージョンより新しいものがあれば通知します。登録済みの公式ダウンロードページを確認し、新しい版数の候補を提示することもできます。
+- **Automatic latest-version fetch for ASUS boards (executable edition)** — For ASUS boards, the version check queries ASUS's official support API by model name — no page URL needs to be registered — and reads the latest BIOS version and its release date from the structured response. The fetched version, the fetch date/time, and the source URL are recorded in the ledger and shown on the board's card, whether or not a newer version was found. If the check fails (for example, the model name does not match the official spelling), the reason is shown and nothing is recorded. Automatic fetching currently covers **ASUS only**; other vendors use the registered-page check or manual entry.
+  **ASUS ボードの最新版自動取得（実行ファイル版）** — ASUS のボードについては、モデル名で ASUS の公式サポート API に問い合わせ、構造化データから最新の BIOS バージョンと公開日を取得します（ページ URL の登録は不要です）。取得した版数・取得日時・取得元 URL は、新しい版数があってもなくても台帳に記録され、ボードのカードに表示されます。取得できない場合（モデル名が公式の表記と違う等）は理由を表示し、記録はしません。自動取得の対応は現在 **ASUS のみ** で、それ以外のベンダーは登録済みページの確認か手入力です。
 - **Collect your PC's info easily** — The built-in collector batch (`biosman-collect.bat`) runs on a Windows PC and writes its motherboard and BIOS info to a text file; paste that text into BIOSMAN and the registration form fills itself in, including the board revision.
   **情報収集の取り込み** — 収集バッチを調べたい Windows PC で実行するとマザーボードと BIOS の情報がテキストに書き出され、それを貼り付けるだけで登録フォームに自動入力されます（基板リビジョンも取り込みます）。
 
@@ -36,9 +38,9 @@ Supported vendors: ASUS / MSI / GIGABYTE / ASRock / Biostar / others. Links to e
 
 ## Honest scope / 正直な範囲
 
-**BIOSMAN records, guides, and detects. It does not download BIOS files for you, and it never flashes a BIOS.** Flashing must always be done with the file from the vendor's official page, following the vendor's official procedure. Newer versions found on official pages are shown as candidates only — nothing is treated as "the latest" until you confirm and record it yourself.
+**BIOSMAN records, guides, and detects. It does not download BIOS files for you, and it never flashes a BIOS.** Flashing must always be done with the file from the vendor's official page, following the vendor's official procedure. Newer versions found on official pages or via the official ASUS API are shown as candidates only — nothing is treated as "the latest" until you confirm and record it yourself. The fetch itself only ever reads version information (a small JSON response); it never downloads a BIOS file.
 
-**BIOSMAN は記録と案内と検出をするものです。BIOS ファイルのダウンロードや、BIOS の書き換え自体は行いません。** 書き換えは必ず各ベンダーの公式ページから入手したファイルで、公式手順で行ってください。公式ページで見つかった新しい版数は「候補」として提示するだけで、あなたが確認して記録するまで最新としては扱いません。
+**BIOSMAN は記録と案内と検出をするものです。BIOS ファイルのダウンロードや、BIOS の書き換え自体は行いません。** 書き換えは必ず各ベンダーの公式ページから入手したファイルで、公式手順で行ってください。公式ページや ASUS 公式 API で見つかった新しい版数は「候補」として提示するだけで、あなたが確認して記録するまで最新としては扱いません。取得処理が読み取るのは版数情報（小さな JSON 応答）だけで、BIOS ファイル自体をダウンロードすることはありません。
 
 ## Your data / データについて
 
@@ -58,6 +60,10 @@ All data stays on your own device. The browser edition stores it in the browser'
   ```
 
 ブラウザ版は `index.html` を開くだけでアプリ本体そのものです。実行ファイル版の開発用起動は、ラッパーが同じフォルダの `index.html` を読み込む作りのため、まず `index.html` を `electron/` にコピーしてから Electron で起動します。
+
+Logic tests (version comparison, page extraction, the ASUS API response parser — against a trimmed real capture in `tests/fixtures/`) run with plain Node, no dependencies: `node tests/run-tests.js`.
+
+ロジックのテスト（版数比較、ページ抽出、ASUS API 応答の解析。実応答を切り詰めたフィクスチャ使用）は依存なしの Node で実行できます: `node tests/run-tests.js`
 
 ## License / ライセンス
 
