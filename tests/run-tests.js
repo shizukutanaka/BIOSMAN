@@ -1,0 +1,145 @@
+// BIOSMAN logic tests — node tests/run-tests.js [path-to-index.html]
+// Zero dependencies. Extracts the pure functions from index.html and
+// exercises them in a vm sandbox (the page itself needs a DOM, so the
+// whole script is never run here).
+//
+// Sections tagged [baseline] cover behaviour that predates the ASUS
+// auto-fetch feature; they must pass against any version of the file.
+// Sections tagged [asus] cover the new feature; when run against an
+// older index.html the functions are absent and the tests report
+// SKIP-ABSENT instead of failing, so a before/after comparison shows
+// exactly what the feature added.
+'use strict';
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+
+const htmlPath = process.argv[2] || path.join(__dirname, '..', 'index.html');
+const html = fs.readFileSync(htmlPath, 'utf8');
+const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]).join('\n');
+
+function extractFn(src, name) {
+  const start = src.indexOf('function ' + name + '(');
+  if (start < 0) return null;
+  let i = src.indexOf('{', start);
+  if (i < 0) return null;
+  let depth = 0;
+  const begin = i;
+  for (; i < src.length; i++) {
+    if (src[i] === '{') depth++;
+    else if (src[i] === '}') { depth--; if (depth === 0) return src.slice(start, i + 1); }
+  }
+  return null;
+}
+
+const sandbox = { console };
+vm.createContext(sandbox);
+// Top-level constants the extracted functions close over.
+for (const m of scripts.matchAll(/var (ASUS_API_BASE) = "[^"]*";/g)) {
+  vm.runInContext(m[0], sandbox);
+}
+const FN_NAMES = ['normVer', 'tokenizeVer', 'cmpVer', 'extractVersionCandidates', 'asusApiUrl', 'parseAsusBiosResponse'];
+const present = {};
+for (const name of FN_NAMES) {
+  const src = extractFn(scripts, name);
+  present[name] = !!src;
+  if (src) vm.runInContext(src, sandbox);
+}
+const L = sandbox;
+
+let pass = 0, fail = 0, skip = 0;
+function ok(cond, name) { if (cond) { pass++; } else { fail++; console.error('FAIL:', name); } }
+function section(tag, needs, fn) {
+  const missing = needs.filter(n => !present[n]);
+  if (missing.length) {
+    skip++;
+    console.log(`SKIP-ABSENT [${tag}] needs ${missing.join(', ')}`);
+    return;
+  }
+  fn();
+}
+
+/* ---------------- [baseline] version comparison ---------------- */
+section('baseline', ['cmpVer', 'normVer'], () => {
+  const s = (a, b) => Math.sign(L.cmpVer(a, b));
+  ok(s('1.9', '1.10') === -1, 'cmpVer: 1.9 < 1.10 (numeric tokens, not string order)');
+  ok(s('3886', '4004') === -1, 'cmpVer: 3886 < 4004');
+  ok(s('5055', '4004') === 1, 'cmpVer: 5055 > 4004');
+  ok(s('4004', '4004') === 0, 'cmpVer: equal');
+  ok(s('F12', 'F13') === -1, 'cmpVer: F12 < F13 (letter+number tokens)');
+  ok(s('v4004', '4004') === 0, 'cmpVer: leading v is normalised away');
+  ok(s('2.0', '10.0') === -1, 'cmpVer: 2.0 < 10.0');
+  ok(s('1.0a', '1.0b') === -1, 'cmpVer: 1.0a < 1.0b');
+  ok(s('', '1') === -1, 'cmpVer: empty < 1');
+  ok(L.normVer(' V1.2 ') === '1.2', 'normVer trims and strips leading v');
+});
+
+/* ---------------- [baseline] heuristic page extraction ---------------- */
+section('baseline', ['extractVersionCandidates'], () => {
+  const sample = '<html><body><div>BIOS</div><div>Version 4004</div>' +
+    '<a href="x">ROG-STRIX-B650E-F-GAMING-WIFI-ASUS-3881.CAP</a></body></html>';
+  const cands = L.extractVersionCandidates(sample);
+  ok(cands.includes('4004'), 'extractVersionCandidates finds labelled version');
+  ok(cands.includes('3881'), 'extractVersionCandidates finds .CAP file version');
+});
+
+/* ---------------- [asus] API URL builder ---------------- */
+section('asus', ['asusApiUrl'], () => {
+  const u = L.asusApiUrl('ROG STRIX B650E-F GAMING WIFI');
+  ok(u.startsWith('https://www.asus.com/support/api/product.asmx/GetPDBIOS?'), 'asusApiUrl: official asus.com endpoint');
+  ok(u.includes('website=global'), 'asusApiUrl: website=global');
+  ok(u.includes('model=ROG%20STRIX%20B650E-F%20GAMING%20WIFI'), 'asusApiUrl: model is URL-encoded');
+  ok(u.includes('sitelang=en'), 'asusApiUrl: sitelang=en');
+});
+
+/* ---------------- [asus] response parser ---------------- */
+const fixture = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'asus-b650ef.json'), 'utf8'));
+const fixtureText = JSON.stringify(fixture);
+const failText = fs.readFileSync(path.join(__dirname, 'fixtures', 'asus-fail.json'), 'utf8');
+
+section('asus', ['parseAsusBiosResponse'], () => {
+  const r = L.parseAsusBiosResponse(fixtureText);
+  ok(r.ok === true, 'parse: real capture parses');
+  ok(r.version === '4004', 'parse: latest version from real capture is 4004 (got ' + (r && r.version) + ')');
+  ok(r.releaseDate === '2026/09/21', 'parse: release date of latest is 2026/09/21');
+
+  const f = L.parseAsusBiosResponse(failText);
+  ok(f.ok === false, 'parse: FAIL response (unknown model) is not ok');
+
+  ok(L.parseAsusBiosResponse('not json at all').ok === false, 'parse: garbage is not ok');
+  ok(L.parseAsusBiosResponse('').ok === false, 'parse: empty is not ok');
+  ok(L.parseAsusBiosResponse('{"Status":"SUCCESS","Result":{"Obj":[]}}').ok === false,
+    'parse: SUCCESS but no BIOS list is not ok');
+
+  // Order independence: the parser must pick the maximum by version
+  // order, not trust the row order of the response.
+  const shuffled = JSON.parse(fixtureText);
+  shuffled.Result.Obj[0].Files.reverse();
+  const rs = L.parseAsusBiosResponse(JSON.stringify(shuffled));
+  ok(rs.ok && rs.version === '4004', 'parse: reversed file order still yields 4004');
+
+  // The "Firmware" object (Version "-") must never win.
+  const fwOnly = JSON.stringify({ Status: 'SUCCESS', Result: { Obj: [fixture.Result.Obj[1]] } });
+  ok(L.parseAsusBiosResponse(fwOnly).ok === false, 'parse: Firmware-only response is not ok');
+
+  // Same version twice: the later release date wins.
+  const tie = JSON.stringify({ Status: 'SUCCESS', Result: { Obj: [{ Name: 'BIOS', Files: [
+    { Version: '3001', ReleaseDate: '2025/01/10' },
+    { Version: '3001', ReleaseDate: '2025/03/02' },
+    { Version: '2999', ReleaseDate: '2025/06/01' },
+  ] }] } });
+  const rt = L.parseAsusBiosResponse(tie);
+  ok(rt.ok && rt.version === '3001' && rt.releaseDate === '2025/03/02',
+    'parse: version tie broken by release date; older version with newer date does not win');
+
+  // A beta-only list still yields its newest version (it is presented
+  // as a candidate; a human confirms before anything is recorded).
+  const beta = JSON.stringify({ Status: 'SUCCESS', Result: { Obj: [{ Name: 'BIOS', Files: [
+    { Version: '3901', ReleaseDate: '2026/08/01', IsRelease: '0' },
+  ] }] } });
+  const rb = L.parseAsusBiosResponse(beta);
+  ok(rb.ok && rb.version === '3901', 'parse: beta-only list yields the beta version as a candidate');
+});
+
+console.log(`${pass} pass / ${fail} fail / ${skip} skipped-absent`);
+process.exit(fail ? 1 : 0);

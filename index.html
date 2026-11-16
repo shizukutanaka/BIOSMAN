@@ -760,10 +760,14 @@ ja: {
   notifyTitle: "BIOSMAN",
   newerBannerTitle: "USB の中に、今より新しい BIOS があります",
   newerLine: "{machine}（{model}）: 現在 {cur} → USB 内 {ver}",
-  checkNoUrl: "公式ダウンロード URL が登録されたボードがありません。ボードの「編集」から URL を登録すると、ここで新しい版数を探せます。",
+  checkNoUrl: "確認できるボードがありません。ASUS のボードはモデル名で公式 API から自動確認できます。それ以外のベンダーは、ボードの「編集」から公式ダウンロード URL を登録すると確認できます。",
   checkFail: "取得失敗: {board}（{error}）",
+  checkFailAsus: "ASUS 公式 API で確認できませんでした: {board}（{error}）。モデル名が公式の表記と一致しているか確認してください。",
+  candSrcApi: "公式API",
+  apiChecked: "ASUS 公式 API で確認: 最新 {ver}（{date} 公開）・取得 {at}",
+  apiSource: "取得元",
   candTitle: "新しい版数の候補",
-  candNote: "候補は公式ページの文字列から抽出した推定です。ベンダーごとにページ構造が違うため、自動では断定しません。公式ページで内容を確認し、正しいものだけ記録してください。",
+  candNote: "候補は公式ページの文字列から抽出した推定、または公式 API の構造化データです。自動では記録しません。公式ページで内容を確認し、正しいものだけ記録してください。",
   candFor: "{machine}（{model}）の候補",
   candNotify: "{machine}（{model}）に新しい版数の候補 {ver} が見つかりました",
   btnRecordLatest: "最新として記録",
@@ -772,7 +776,7 @@ ja: {
   helpCautionTitle: "更新中・直後の注意（起動不能を防ぐ）",
   helpCautionBody: "書き換えの進捗が 99% や数分間止まって見えても、処理は続いていることがあります。その間は電源を切ったり再起動したりしないでください。再起動直後に画面が真っ暗なままの時間（メモリートレーニング、30 秒〜2 分）は正常な動作です。焦って電源を切ることが、起動不能の主な原因のひとつです。また更新の前には、最適化デフォルト（Load Optimized Defaults）を読み込んで XMP/EXPO や電圧チューニングを解除しておくことも、失敗を防ぐ基本です。万が一に備え、各ボードの「復旧手段」（USB Flashback の有無、デュアル BIOS、復旧手順メモ）を編集画面で記録しておくと、事故のときに復旧の順序をすぐ確認できます。",
   helpPcTitle: "PC 連携（実行ファイル版のみ）",
-  helpPcBody: "実行ファイル版（BIOSMAN.exe）では、接続中の USB メモリを読み取り専用で走査し、中の BIOS ファイルを台帳と照合して一覧表示できます。ファイル名から版数を推定できる場合は「推定」と明示して候補を出し、記録前に直せます。USB 内の版数がボードの現在バージョンより新しいものがあれば通知します。また、公式ダウンロード URL が登録されたボードについては公式ページを取得し、新しい版数の候補を提示します。候補は推定であり、記録は必ず人が確認してから行います。USB への書き込みや削除は一切しません。",
+  helpPcBody: "実行ファイル版（BIOSMAN.exe）では、接続中の USB メモリを読み取り専用で走査し、中の BIOS ファイルを台帳と照合して一覧表示できます。ファイル名から版数を推定できる場合は「推定」と明示して候補を出し、記録前に直せます。USB 内の版数がボードの現在バージョンより新しいものがあれば通知します。また、公式ダウンロード URL が登録されたボードについては公式ページを取得し、新しい版数の候補を提示します。候補は推定であり、記録は必ず人が確認してから行います。USB への書き込みや削除は一切しません。ASUS のボードについては、モデル名で ASUS の公式サポート API に問い合わせ、構造化データから最新の版数と公開日を取得します。取得した版数・取得日時・取得元は台帳に記録され、ボードのカードに表示されます（自動取得の対応は現在 ASUS のみです）。",
 },
 en: {
   tagline: "BIOS registry for multiple motherboards",
@@ -967,10 +971,14 @@ en: {
   notifyTitle: "BIOSMAN",
   newerBannerTitle: "A newer BIOS than the installed one is on a USB drive",
   newerLine: "{machine} ({model}): current {cur} -> on USB {ver}",
-  checkNoUrl: "No board has an official download URL recorded. Add one via the board's Edit form to enable version checks here.",
+  checkNoUrl: "No board can be checked yet. ASUS boards are checked automatically by model name via the official ASUS API. For other vendors, add the official download URL via the board's Edit form to enable checks.",
   checkFail: "Fetch failed: {board} ({error})",
+  checkFailAsus: "The official ASUS API check failed: {board} ({error}). Check that the model name matches the official spelling.",
+  candSrcApi: "Official API",
+  apiChecked: "Checked via the official ASUS API: latest {ver} (released {date}) · fetched {at}",
+  apiSource: "Source",
   candTitle: "Candidate newer versions",
-  candNote: "Candidates are estimates extracted from the text of official pages. Page layouts differ by vendor, so nothing is recorded automatically. Verify on the official page and record only what is correct.",
+  candNote: "Candidates are estimates extracted from the text of official pages, or structured data from an official API. Nothing is recorded automatically. Verify on the official page and record only what is correct.",
   candFor: "Candidates for {machine} ({model})",
   candNotify: "A newer version candidate {ver} was found for {machine} ({model})",
   btnRecordLatest: "Record as latest",
@@ -979,7 +987,7 @@ en: {
   helpCautionTitle: "Cautions during and after an update (avoid a bricked board)",
   helpCautionBody: "Even if progress seems stuck at 99% or frozen for minutes, the update is usually still running — never cut the power or reboot in the meantime. A black screen right after the reboot (memory training, 30 seconds to 2 minutes) is normal. Cutting power in a panic is one of the main causes of a board that no longer boots. Loading Optimized Defaults beforehand to clear XMP/EXPO and voltage tuning is another basic safeguard. For emergencies, record each board's recovery options (USB Flashback, dual BIOS, recovery notes) in the Edit form so the recovery order is at hand when you need it.",
   helpPcTitle: "PC integration (desktop app only)",
-  helpPcBody: "In the desktop app (BIOSMAN.exe), BIOSMAN scans connected USB drives read-only, lists the BIOS files it finds, and matches them against the registry. When a version can be estimated from a file name it is labelled as an estimate and can be corrected before recording. You are notified when a USB drive holds a BIOS newer than a board's installed version. For boards with a recorded official download URL, the official page is fetched and newer-version candidates are presented. Candidates are estimates; recording always requires your confirmation. USB drives are never written to or deleted from.",
+  helpPcBody: "In the desktop app (BIOSMAN.exe), BIOSMAN scans connected USB drives read-only, lists the BIOS files it finds, and matches them against the registry. When a version can be estimated from a file name it is labelled as an estimate and can be corrected before recording. You are notified when a USB drive holds a BIOS newer than a board's installed version. For boards with a recorded official download URL, the official page is fetched and newer-version candidates are presented. Candidates are estimates; recording always requires your confirmation. USB drives are never written to or deleted from. For ASUS boards, BIOSMAN queries the official ASUS support API by model name and reads the latest version and its release date from the structured response; the fetched version, fetch time, and source are recorded in the registry and shown on the board's card (automatic fetching currently covers ASUS only).",
 }
 };
 </script>
@@ -1028,6 +1036,12 @@ function todayStr(){
   var m = String(d.getMonth()+1).padStart(2,"0");
   var day = String(d.getDate()).padStart(2,"0");
   return d.getFullYear() + "-" + m + "-" + day;
+}
+function fmtDateTime(iso){
+  var d = new Date(iso || "");
+  if(isNaN(d.getTime())) return String(iso || "");
+  var p = function(n){ return String(n).padStart(2,"0"); };
+  return d.getFullYear() + "-" + p(d.getMonth()+1) + "-" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
 }
 
 /* ---------- version comparison (natural, approximate) ---------- */
@@ -1173,6 +1187,15 @@ function renderCard(b){
   if(b.latestDate) h += '<div class="d">' + esc(b.latestDate) + "</div>";
   h += "</div></div>";
   h += '<div class="basis">' + esc(basis) + "</div>";
+  if(b.lastFetch && normVer(b.lastFetch.ver)){
+    var lf = b.lastFetch;
+    h += '<div class="basis">' + esc(t("apiChecked")
+      .replace("{ver}", normVer(lf.ver))
+      .replace("{date}", lf.relDate || "?")
+      .replace("{at}", fmtDateTime(lf.at)));
+    if(lf.url) h += ' · <a href="' + esc(lf.url) + '" target="_blank" rel="noopener noreferrer">' + esc(t("apiSource")) + "</a>";
+    h += "</div>";
+  }
   if(st === "update"){
     var readyUsb = boardReadyUsb(b);
     if(readyUsb){
@@ -1762,7 +1785,7 @@ render();
 var scanResults = [];     /* [{ file, est, match }] */
 var scanDone = false;
 var scanError = "";
-var verCandidates = [];   /* [{ boardId, ver }] */
+var verCandidates = [];   /* [{ boardId, ver, src?, relDate? }] — src "asus" marks official-API results */
 var newVerFindings = [];  /* [{ boardId, ver, estimated }] */
 var checkRan = false;
 var pcNotified = {};      /* dedupe keys for OS notifications, per session */
@@ -2030,6 +2053,48 @@ function extractVersionCandidates(html){
   while((m = reCap.exec(text)) !== null) add(m[1]);
   return order;
 }
+/* ---------- ASUS official API (vendor-specific auto-fetch) ----------
+   ASUS boards are checked against ASUS's own support API — the same
+   structured feed the official support pages use — instead of scraping
+   page text. The endpoint is on asus.com and needs only the model name
+   (it is case-insensitive). The response lists every BIOS file with a
+   version and release date; the latest is chosen by version order
+   (cmpVer), never by row order, and a beta build can be the answer —
+   it is still only ever presented as a candidate, and a human records
+   it. A successful fetch is recorded on the board (lastFetch: version,
+   release date, fetch time, source URL) whether or not it is newer. */
+var ASUS_API_BASE = "https://www.asus.com/support/api/product.asmx/GetPDBIOS";
+function asusApiUrl(model){
+  return ASUS_API_BASE + "?website=global&model=" +
+    encodeURIComponent(String(model == null ? "" : model).trim()) + "&sitelang=en";
+}
+function parseAsusBiosResponse(text){
+  var data;
+  try{ data = JSON.parse(String(text == null ? "" : text)); }
+  catch(e){ return { ok: false, error: "bad-json" }; }
+  if(!data || data.Status !== "SUCCESS" || !data.Result || !Array.isArray(data.Result.Obj)){
+    return { ok: false, error: "api-fail" };
+  }
+  var files = null;
+  for(var i=0;i<data.Result.Obj.length;i++){
+    if(data.Result.Obj[i] && data.Result.Obj[i].Name === "BIOS"){ files = data.Result.Obj[i].Files; break; }
+  }
+  if(!Array.isArray(files)) return { ok: false, error: "no-bios-list" };
+  var best = null;
+  files.forEach(function(f){
+    if(!f) return;
+    var v = normVer(f.Version);
+    if(!v || !/\d/.test(v)) return;
+    var d = String(f.ReleaseDate || "");
+    if(!best || cmpVer(v, best.version) > 0 ||
+       (cmpVer(v, best.version) === 0 && d > best.releaseDate)){
+      best = { version: v, releaseDate: d };
+    }
+  });
+  if(!best) return { ok: false, error: "no-bios-version" };
+  return { ok: true, version: best.version, releaseDate: best.releaseDate };
+}
+
 function renderCheckMeta(errors, note){
   var el = document.getElementById("checkMeta");
   var h = "";
@@ -2047,7 +2112,7 @@ function renderCandidates(){
   var order = [];
   verCandidates.forEach(function(c){
     if(!byBoard[c.boardId]){ byBoard[c.boardId] = []; order.push(c.boardId); }
-    byBoard[c.boardId].push(c.ver);
+    byBoard[c.boardId].push(c);
   });
   var h = '<div class="cand-head">' + esc(t("candTitle")) + "</div>";
   h += '<div class="guide-note" style="margin:0 0 10px">' + esc(t("candNote")) + "</div>";
@@ -2056,12 +2121,16 @@ function renderCandidates(){
     if(!b) return;
     h += '<div class="scan-sub" style="margin:10px 0 6px; font-weight:700; color:var(--text); font-size:13.5px">' +
       esc(t("candFor").replace("{machine}", b.machine).replace("{model}", b.model)) + "</div>";
-    byBoard[bid].forEach(function(v){
+    byBoard[bid].forEach(function(c){
+      var v = c.ver;
       var basis = t("basis")
         .replace("{cur}", normVer(b.curVer) || t("unrecorded"))
         .replace("{latest}", normVer(b.latestVer) || t("unrecorded"));
-      h += '<div class="cand-row"><span class="cand-ver">' + esc(v) + '</span>' +
-        '<span class="scan-sub" style="margin-top:0">' + esc(basis) + "</span>" +
+      h += '<div class="cand-row"><span class="cand-ver">' + esc(v) + '</span>';
+      if(c.src === "asus"){
+        h += '<span class="chip">' + esc(t("candSrcApi")) + (c.relDate ? " · " + esc(c.relDate) : "") + "</span>";
+      }
+      h += '<span class="scan-sub" style="margin-top:0">' + esc(basis) + "</span>" +
         '<span style="flex:1"></span>' +
         '<button class="btn small primary" data-cact="record" data-board="' + esc(bid) + '" data-ver="' + esc(v) + '">' + esc(t("btnRecordLatest")) + "</button></div>";
     });
@@ -2069,11 +2138,19 @@ function renderCandidates(){
   wrap.innerHTML = h;
 }
 
-/* ---------- "Check for newer versions" ---------- */
+/* ---------- "Check for newer versions" ----------
+   ASUS boards are checked against the official ASUS API by model name
+   (no registered URL needed) and the fetch is recorded on the board.
+   If the API check fails, the reason is shown and the board falls back
+   to the registered-page check below when it has a URL. All other
+   boards use the registered-page check: fetch the official page the
+   user recorded and extract version candidates heuristically. */
 function doCheckVersions(){
   var pc = pcBridge();
   if(!pc || pcChecking) return;
-  var targets = state.boards.filter(function(b){ return !!b.dlUrl; });
+  var targets = state.boards.filter(function(b){
+    return !!b.dlUrl || (b.vendor === "ASUS" && String(b.model || "").trim() !== "");
+  });
   if(!targets.length){
     checkRan = true;
     renderCheckMeta([], t("checkNoUrl"));
@@ -2086,10 +2163,51 @@ function doCheckVersions(){
   btn.disabled = true;
   btn.textContent = t("checkBusyLabel");
   var errors = [];
+  function asusStep(b){
+    if(!(b.vendor === "ASUS" && String(b.model || "").trim() !== "")) return Promise.resolve(false);
+    var url = asusApiUrl(b.model);
+    return pc.fetchText(url).then(function(res){
+      if(!res || !res.ok){
+        errors.push(t("checkFailAsus")
+          .replace("{board}", b.machine + " — " + b.model)
+          .replace("{error}", (res && (res.error || ("HTTP " + res.status))) || "unknown"));
+        return false;
+      }
+      var parsed = parseAsusBiosResponse(res.text);
+      if(!parsed.ok){
+        errors.push(t("checkFailAsus")
+          .replace("{board}", b.machine + " — " + b.model)
+          .replace("{error}", parsed.error));
+        return false;
+      }
+      b.lastFetch = { ver: parsed.version, relDate: parsed.releaseDate || "", at: new Date().toISOString(), url: url };
+      saveState();
+      var base = normVer(b.latestVer) || normVer(b.curVer);
+      if(!base || cmpVer(parsed.version, base) > 0){
+        var exists = verCandidates.some(function(c){ return c.boardId === b.id && c.ver === parsed.version; });
+        if(!exists){
+          verCandidates.push({ boardId: b.id, ver: parsed.version, src: "asus", relDate: parsed.releaseDate || "" });
+          pcNotify("web|" + b.id + "|" + normVer(parsed.version), t("notifyTitle"),
+            t("candNotify")
+              .replace("{machine}", b.machine)
+              .replace("{model}", b.model)
+              .replace("{ver}", parsed.version));
+        }
+      }
+      return true;
+    }).catch(function(e){
+      errors.push(t("checkFailAsus")
+        .replace("{board}", b.machine + " — " + b.model)
+        .replace("{error}", String((e && e.message) || e)));
+      return false;
+    });
+  }
   var chain = Promise.resolve();
   targets.forEach(function(b){
     chain = chain.then(function(){
-      return pc.fetchText(b.dlUrl).then(function(res){
+      return asusStep(b).then(function(handled){
+        if(handled || !b.dlUrl) return;
+        return pc.fetchText(b.dlUrl).then(function(res){
         if(!res || !res.ok){
           errors.push(t("checkFail")
             .replace("{board}", b.machine + " — " + b.model)
@@ -2113,10 +2231,11 @@ function doCheckVersions(){
               .replace("{model}", b.model)
               .replace("{ver}", v));
         });
-      }).catch(function(e){
-        errors.push(t("checkFail")
-          .replace("{board}", b.machine + " — " + b.model)
-          .replace("{error}", String((e && e.message) || e)));
+        }).catch(function(e){
+          errors.push(t("checkFail")
+            .replace("{board}", b.machine + " — " + b.model)
+            .replace("{error}", String((e && e.message) || e)));
+        });
       });
     });
   });
@@ -2126,6 +2245,7 @@ function doCheckVersions(){
     btn.textContent = t("btnCheckVer");
     renderCheckMeta(errors);
     renderCandidates();
+    render();
   });
 }
 
@@ -2169,7 +2289,10 @@ document.getElementById("candidateList").addEventListener("click", function(ev){
   var ver = btn.getAttribute("data-ver");
   var b = findBoard(bid);
   if(!b || !ver) return;
+  var candObj = null;
+  verCandidates.forEach(function(c){ if(c.boardId === bid && c.ver === ver) candObj = c; });
   b.latestVer = ver;
+  if(candObj && candObj.relDate) b.latestDate = candObj.relDate;
   b.updatedAt = Date.now();
   saveState();
   render();
