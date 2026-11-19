@@ -4,6 +4,7 @@
 // update-check features hide themselves.
 //
 // API (all functions return promises):
+//   collectLocal()     -> collector text or null (Windows only).
 //   scanUSB()          -> { files: [{ drive, path, name, size, mtime }], error: string|null }
 //                         files is [] (with error null) when no removable
 //                         drive is present; error explains failures.
@@ -14,6 +15,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('biosmanPC', {
+  ...(process.platform === 'win32' ? { collectLocal: () => ipcRenderer.invoke('biosman:collectLocal') } : {}),
   scanUSB: () => ipcRenderer.invoke('biosman:scanUSB'),
   fetchText: (url) => ipcRenderer.invoke('biosman:fetchText', String(url)),
   notify: (title, body) => ipcRenderer.invoke('biosman:notify', {

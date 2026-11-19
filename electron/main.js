@@ -93,6 +93,33 @@ function scanUSB() {
   });
 }
 
+// Return the same text fields as the portable collector, without writing a file.
+const COLLECT_LOCAL_PS = `
+$ErrorActionPreference = 'Stop'
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$board = @(Get-CimInstance Win32_BaseBoard -Property Manufacturer,Product,Version)
+$bios = @(Get-CimInstance Win32_BIOS -Property SMBIOSBIOSVersion,ReleaseDate)
+if ($board.Count -ne 1 -or $bios.Count -ne 1 -or
+    [string]::IsNullOrWhiteSpace($board[0].Product) -or
+    [string]::IsNullOrWhiteSpace($bios[0].SMBIOSBIOSVersion)) { exit 1 }
+'BASEBOARD_MANUFACTURER=' + $board[0].Manufacturer
+'BASEBOARD_PRODUCT=' + $board[0].Product
+'BASEBOARD_VERSION=' + $board[0].Version
+'BIOS_VERSION=' + $bios[0].SMBIOSBIOSVersion
+if ($bios[0].ReleaseDate) {
+  'BIOS_RELEASEDATE=' + $bios[0].ReleaseDate.ToString('yyyy-MM-dd', [Globalization.CultureInfo]::InvariantCulture)
+}
+`;
+
+function collectLocal() {
+  if (process.platform !== 'win32') return null;
+  return new Promise((resolve) => {
+    execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', COLLECT_LOCAL_PS],
+      { windowsHide: true, timeout: 10000, maxBuffer: 64 * 1024 },
+      (err, stdout) => resolve(err ? null : stdout));
+  });
+}
+
 function fetchText(url) {
   return new Promise((resolve) => {
     let parsed;
@@ -149,6 +176,7 @@ function fetchText(url) {
 }
 
 function registerBridge() {
+  ipcMain.handle('biosman:collectLocal', () => collectLocal());
   ipcMain.handle('biosman:scanUSB', async () => {
     try { return await scanUSB(); }
     catch (e) { return { files: [], error: 'scan-failed: ' + e.message }; }
