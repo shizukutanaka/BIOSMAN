@@ -455,7 +455,7 @@ table.scan th{color:var(--sub); font-size:12px}
   </div>
 </div>
 
-<!-- Paste import modal -->
+<!-- PC info import modal -->
 <div class="overlay" id="importModal">
   <div class="modal">
     <h2 data-i18n="iTitle"></h2>
@@ -470,6 +470,7 @@ table.scan th{color:var(--sub); font-size:12px}
     </div>
     <div class="modal-actions">
       <button type="button" class="btn" id="btnImportCancel" data-i18n="cancel"></button>
+      <button type="button" class="btn" id="btnCollectLocal" data-i18n="iCollectLocal" hidden></button>
       <button type="button" class="btn primary" id="btnImportParse" data-i18n="iParse"></button>
     </div>
   </div>
@@ -573,7 +574,7 @@ ja: {
   btnExport: "JSON 書き出し",
   btnImport: "JSON 読み込み",
   btnAdd: "＋ ボードを追加",
-  btnPasteImport: "収集テキストを取り込む",
+  btnPasteImport: "PC 情報を取り込む",
   honestNotice: "BIOSMAN は記録と案内をするものです。BIOS ファイルのダウンロードや、BIOS の書き換え自体は行いません。書き換えは必ずベンダー公式の手順で行ってください。",
   statTotal: "登録ボード",
   statUpdate: "更新あり",
@@ -589,8 +590,8 @@ ja: {
   helpTitle: "BIOSMAN について",
   helpAbout: "BIOSMAN は、複数台の PC のマザーボードについて「どのマシンに・どのボードが・どの BIOS バージョンで載っていて・最新版が出ているか・いつ更新したか」を記録する台帳です。BIOS の書き換えそのものは行いません。更新ファイルの入手と書き換えは、各ベンダーの公式ページと公式手順で行ってください。バージョンの新旧判定は数字と文字を分けて比べる近似判定で、画面に両方のバージョンを常時表示します。最終確認は公式ページでお願いします。",
   helpVendorsTitle: "ベンダー公式ダウンロードセンター",
-  helpCollectTitle: "情報収集バッチの使い方（Windows）",
-  helpCollectBody: "画面上部の「収集バッチ (.bat)」で biosman-collect.bat を保存し、調べたい Windows PC で実行すると、同じフォルダに biosman-info.txt ができます。その内容を「収集テキストを取り込む」に貼り付けると、登録フォームに自動入力されます。バッチが読むのはマザーボードと BIOS の情報だけで、外部送信は一切しません。",
+  helpCollectTitle: "PC 情報の取り込み（Windows）",
+  helpCollectBody: "Windows 実行ファイル版で使用中の PC を登録するには、「PC 情報を取り込む」から「この PC の情報を読み取る」を選びます。ブラウザ版や別の PC の情報には、調べたい Windows PC で収集バッチ (.bat) を実行し、生成された biosman-info.txt の内容を貼り付けてください。読み取るのはマザーボードと BIOS の情報だけで、外部には送信しません。",
   helpDataTitle: "データについて",
   helpDataBody: "データはこのブラウザの localStorage にだけ保存されます。作成者側のサーバー等に送られることはありません。バックアップや別の端末への移行には「JSON 書き出し／読み込み」を使ってください。",
   footerNote: "記録と案内のための台帳です。BIOS の書き換えは行いません。",
@@ -656,11 +657,13 @@ ja: {
     "ファイルはベンダーの公式ページから入手した",
     "書き換え中は絶対に電源を切らない",
   ],
-  iTitle: "収集テキストの取り込み",
+  iTitle: "PC 情報の取り込み",
   iSub: "biosman-info.txt の内容を貼り付けると、ベンダー・モデル・リビジョン・現在の BIOS バージョンと日付を読み取って登録フォームを開きます。",
   iTextLabel: "biosman-info.txt の内容",
   iParse: "読み取ってフォームを開く",
   iParseFail: "読み取れる項目がありませんでした。KEY=VALUE 形式のテキストを貼り付けてください。",
+  iCollectLocal: "この PC の情報を読み取る",
+  iCollectFail: "この PC の情報を読み取れませんでした。収集テキストの貼り付け、または手入力で登録できます。",
   importOk: "JSON を読み込みました（{n} 件）。",
   importFail: "JSON の読み込みに失敗しました。BIOSMAN から書き出したファイルを選んでください。",
   importConfirm: "現在の記録 {cur} 件を、読み込む {n} 件で置き換えます。よろしいですか？",
@@ -784,7 +787,7 @@ en: {
   btnExport: "Export JSON",
   btnImport: "Import JSON",
   btnAdd: "+ Add board",
-  btnPasteImport: "Import collected text",
+  btnPasteImport: "Import PC info",
   honestNotice: "BIOSMAN records and guides only. It does not download BIOS files and it never flashes a BIOS. Always update using the vendor's official procedure.",
   statTotal: "Boards",
   statUpdate: "Update available",
@@ -800,8 +803,8 @@ en: {
   helpTitle: "About BIOSMAN",
   helpAbout: "BIOSMAN is a registry that records, for every PC you own, which motherboard it has, which BIOS version is installed, whether a newer one exists, and when you updated. It never flashes a BIOS itself. Get update files and follow procedures only on each vendor's official pages. Version comparison is an approximation (digits and letters compared separately); both versions are always shown on screen, so check the official page for the final word.",
   helpVendorsTitle: "Official vendor download centers",
-  helpCollectTitle: "Using the collector batch (Windows)",
-  helpCollectBody: "Use \"Collector (.bat)\" at the top to save biosman-collect.bat, run it on the Windows PC you want to inspect, and it writes biosman-info.txt next to itself. Paste that file's contents into \"Import collected text\" and the registration form is filled in for you. The batch only reads motherboard and BIOS information and sends nothing anywhere.",
+  helpCollectTitle: "Importing PC info (Windows)",
+  helpCollectBody: "To register the PC running the Windows app, open \"Import PC info\" and select \"Read this PC\". In the browser or for another PC, run Collector (.bat) on the Windows PC you want to inspect and paste the contents of the generated biosman-info.txt. Only motherboard and BIOS information is read, and it stays on your device.",
   helpDataTitle: "Your data",
   helpDataBody: "Data is stored only in this browser's localStorage. Nothing is sent to the author's servers. Use Export / Import JSON for backup or moving to another device.",
   footerNote: "A registry for records and guidance. It does not flash BIOS.",
@@ -867,11 +870,13 @@ en: {
     "The file was obtained from the vendor's official page",
     "I will never turn off the power during the update",
   ],
-  iTitle: "Import collected text",
+  iTitle: "Import PC info",
   iSub: "Paste the contents of biosman-info.txt and BIOSMAN reads the vendor, model, revision, current BIOS version and date, then opens the registration form.",
   iTextLabel: "Contents of biosman-info.txt",
   iParse: "Parse and open the form",
   iParseFail: "Nothing readable was found. Paste KEY=VALUE text.",
+  iCollectLocal: "Read this PC",
+  iCollectFail: "Could not read this PC. You can paste collected text or register the board manually.",
   importOk: "Imported JSON ({n} boards).",
   importFail: "Failed to import JSON. Choose a file exported by BIOSMAN.",
   importConfirm: "Replace the current {cur} records with the {n} imported ones?",
@@ -1509,14 +1514,42 @@ function parseCollected(text){
     curDate: parseCollectedDate(biosDate)
   };
 }
-function openImport(){ document.getElementById("importModal").classList.add("open"); }
-function closeImport(){ document.getElementById("importModal").classList.remove("open"); }
-function doParseImport(){
-  var parsed = parseCollected(document.getElementById("importText").value);
-  if(!parsed){ alert(t("iParseFail")); return; }
+var collectingForImport = false;
+function openImport(){
+  var pc = window.biosmanPC;
+  document.getElementById("btnCollectLocal").hidden = !pc || typeof pc.collectLocal !== "function";
+  document.getElementById("importModal").classList.add("open");
+}
+function closeImport(){
+  collectingForImport = false;
+  document.getElementById("importModal").classList.remove("open");
+}
+function openCollectedBoardForm(text){
+  var parsed = parseCollected(text);
+  if(!parsed) return false;
   parsed.machine = document.getElementById("importMachine").value.trim();
   closeImport();
   openBoardForm(parsed);
+  return true;
+}
+function doParseImport(){
+  if(!openCollectedBoardForm(document.getElementById("importText").value)) alert(t("iParseFail"));
+}
+async function doCollectLocal(){
+  var pc = window.biosmanPC;
+  var btn = document.getElementById("btnCollectLocal");
+  if(btn.disabled || !pc || typeof pc.collectLocal !== "function") return;
+  btn.disabled = true;
+  collectingForImport = true;
+  try{
+    var text = await pc.collectLocal();
+    if(collectingForImport && !openCollectedBoardForm(text)) alert(t("iCollectFail"));
+  }catch(e){
+    if(collectingForImport) alert(t("iCollectFail"));
+  }finally{
+    btn.disabled = false;
+    collectingForImport = false;
+  }
 }
 
 /* ---------- JSON export / import ---------- */
@@ -1709,6 +1742,7 @@ document.getElementById("btnImportOpen").addEventListener("click", openImport);
 document.getElementById("btnImportFirst").addEventListener("click", openImport);
 document.getElementById("btnImportCancel").addEventListener("click", closeImport);
 document.getElementById("btnImportParse").addEventListener("click", doParseImport);
+document.getElementById("btnCollectLocal").addEventListener("click", doCollectLocal);
 document.getElementById("btnUpdateCancel").addEventListener("click", closeUpdate);
 document.getElementById("btnUpdateConfirm").addEventListener("click", confirmUpdate);
 document.getElementById("btnAddUsb").addEventListener("click", function(){ openUsbForm(null); });
@@ -1763,7 +1797,10 @@ document.getElementById("boardList").addEventListener("click", function(ev){
     }
   }
 });
-["boardModal","updateModal","importModal","usbModal","guideModal"].forEach(function(mid){
+document.getElementById("importModal").addEventListener("click", function(ev){
+  if(ev.target === ev.currentTarget) closeImport();
+});
+["boardModal","updateModal","usbModal","guideModal"].forEach(function(mid){
   document.getElementById(mid).addEventListener("click", function(ev){
     if(ev.target === ev.currentTarget) ev.currentTarget.classList.remove("open");
   });

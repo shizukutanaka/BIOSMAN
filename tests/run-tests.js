@@ -1,7 +1,6 @@
 // BIOSMAN logic tests — node tests/run-tests.js [path-to-index.html]
-// Zero dependencies. Extracts the pure functions from index.html and
-// exercises them in a vm sandbox (the page itself needs a DOM, so the
-// whole script is never run here).
+// Zero dependencies. Exercises version logic and the collector flow
+// in vm sandboxes, with stubs for the DOM and Electron.
 //
 // Sections tagged [baseline] cover behaviour that predates the ASUS
 // auto-fetch feature; they must pass against any version of the file.
@@ -16,7 +15,8 @@ const vm = require('vm');
 
 const htmlPath = process.argv[2] || path.join(__dirname, '..', 'index.html');
 const html = fs.readFileSync(htmlPath, 'utf8');
-const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]).join('\n');
+const scriptBlocks = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+const scripts = scriptBlocks.join('\n');
 
 function extractFn(src, name) {
   const start = src.indexOf('function ' + name + '(');
@@ -141,5 +141,105 @@ section('asus', ['parseAsusBiosResponse'], () => {
   ok(rb.ok && rb.version === '3901', 'parse: beta-only list yields the beta version as a candidate');
 });
 
-console.log(`${pass} pass / ${fail} fail / ${skip} skipped-absent`);
-process.exit(fail ? 1 : 0);
+/* ---------------- same-PC collector ---------------- */
+async function testLocalCollector() {
+  const sample = 'BASEBOARD_MANUFACTURER=Micro-Star International\r\nBASEBOARD_PRODUCT=Test Board\r\n' +
+    'BASEBOARD_VERSION=1.1\r\nBIOS_VERSION=1.09\r\nBIOS_RELEASEDATE=2026-04-06\r\n';
+  const handlers = new Map();
+  const window = {};
+  const electron = {
+    app: { setName() {}, on() {}, whenReady: () => ({ then() {} }) },
+    ipcMain: { handle: (name, handler) => handlers.set(name, handler) },
+    contextBridge: { exposeInMainWorld: (name, api) => { window[name] = api; } },
+    ipcRenderer: { invoke: async (name) => handlers.get(name)() }
+  };
+  const process = { platform: 'win32' };
+  let reply;
+  let command;
+  const electronContext = vm.createContext({
+    process,
+    require: (name) => ({
+      path, electron, child_process: {
+        execFile(file, args, options, cb) {
+          command = { file, args, options };
+          reply = cb;
+        }
+      }
+    })[name]
+  });
+  for (const file of ['main.js', 'preload.js']) {
+    vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'electron', file), 'utf8'), electronContext);
+  }
+  vm.runInContext('registerBridge()', electronContext);
+
+  const elements = new Map();
+  function el(id) {
+    if (!elements.has(id)) {
+      const classes = new Set();
+      const events = {};
+      elements.set(id, {
+        classList: { add: name => classes.add(name), remove: name => classes.delete(name) },
+        isOpen: () => classes.has('open'),
+        value: '',
+        addEventListener: (name, handler) => { events[name] = handler; },
+        click: (event) => events.click(event)
+      });
+    }
+    return elements.get(id);
+  }
+  const forms = [];
+  const alerts = [];
+  vm.runInNewContext(scriptBlocks.find(s => s.includes('function parseCollected(')), {
+    window, document: { getElementById: el },
+    t: key => key, alert: key => alerts.push(key), openBoardForm: data => forms.push(data),
+    closeBoardForm() {}, submitBoardForm() {}, closeUpdate() {}, confirmUpdate() {},
+    buildChecklist() {}, applyI18n() {}, render() {}
+  });
+  const modal = el('importModal');
+  const button = el('btnCollectLocal');
+  const bridge = window.biosmanPC;
+  delete window.biosmanPC;
+  el('btnImportFirst').click();
+  ok(button.hidden, 'local collector: browser hides the desktop action');
+  window.biosmanPC = bridge;
+  el('btnImportOpen').click();
+  ok(!button.hidden, 'local collector: Windows bridge makes action available');
+  el('importMachine').value = ' Test PC ';
+  const success = button.click();
+  ok(button.disabled && command.file === 'powershell.exe' && command.options.timeout === 10000 &&
+    command.args[3].includes('Get-CimInstance Win32_BaseBoard') &&
+    command.args[3].includes('Get-CimInstance Win32_BIOS'), 'local collector: read uses the bounded Windows command');
+  reply(null, sample);
+  await success;
+  ok(JSON.stringify(forms[0]) === JSON.stringify({
+    vendor: 'MSI', model: 'Test Board', revision: '1.1', curVer: '1.09', curDate: '2026-04-06', machine: 'Test PC'
+  }), 'local collector: opens a prefilled form for review');
+  ok(!button.disabled && !modal.isOpen(), 'local collector: closes import on success and restores the action');
+
+  el('btnImportOpen').click();
+  const failure = button.click();
+  reply(new Error('CIM unavailable'), sample);
+  await failure;
+  ok(alerts[0] === 'iCollectFail' && forms.length === 1 && modal.isOpen() && !button.disabled,
+    'local collector: command failure discards output and leaves paste available');
+
+  const cancelled = button.click();
+  modal.click({ target: modal, currentTarget: modal });
+  el('btnImportOpen').click();
+  reply(null, sample);
+  await cancelled;
+  ok(forms.length === 1 && alerts.length === 1 && modal.isOpen(),
+    'local collector: result from a closed import does not affect a reopened import');
+  el('importText').value = sample;
+  el('btnImportParse').click();
+  ok(forms.length === 2 && JSON.stringify(forms[1]) === JSON.stringify(forms[0]),
+    'local collector: the paste route still uses the same form and fields');
+
+  process.platform = 'darwin';
+  ok(await bridge.collectLocal() === null, 'local collector: main process rejects reads on other platforms');
+}
+
+testLocalCollector().catch(error => ok(false, 'local collector: ' + error.stack)).finally(() => {
+  console.log(`${pass} pass / ${fail} fail / ${skip} skipped-absent`);
+  process.exitCode = fail ? 1 : 0;
+});
