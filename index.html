@@ -780,6 +780,8 @@ ja: {
   helpCautionBody: "書き換えの進捗が 99% や数分間止まって見えても、処理は続いていることがあります。その間は電源を切ったり再起動したりしないでください。再起動直後に画面が真っ暗なままの時間（メモリートレーニング、30 秒〜2 分）は正常な動作です。焦って電源を切ることが、起動不能の主な原因のひとつです。また更新の前には、最適化デフォルト（Load Optimized Defaults）を読み込んで XMP/EXPO や電圧チューニングを解除しておくことも、失敗を防ぐ基本です。万が一に備え、各ボードの「復旧手段」（USB Flashback の有無、デュアル BIOS、復旧手順メモ）を編集画面で記録しておくと、事故のときに復旧の順序をすぐ確認できます。",
   helpPcTitle: "PC 連携（実行ファイル版のみ）",
   helpPcBody: "実行ファイル版（BIOSMAN.exe）では、接続中の USB メモリを読み取り専用で走査し、中の BIOS ファイルを台帳と照合して一覧表示できます。ファイル名から版数を推定できる場合は「推定」と明示して候補を出し、記録前に直せます。USB 内の版数がボードの現在バージョンより新しいものがあれば通知します。また、公式ダウンロード URL が登録されたボードについては公式ページを取得し、新しい版数の候補を提示します。候補は推定であり、記録は必ず人が確認してから行います。USB への書き込みや削除は一切しません。ASUS のボードについては、モデル名で ASUS の公式サポート API に問い合わせ、構造化データから最新の版数と公開日を取得します。取得した版数・取得日時・取得元は台帳に記録され、ボードのカードに表示されます（自動取得の対応は現在 ASUS のみです）。",
+  storageLoadFailed: "保存されていた BIOSMAN のデータを読み取れなかったため、空の台帳で開きました。元のデータはブラウザ内の \"biosman-v1.backup\" に保存してあります。データの保全や移行には JSON 書き出し／読み込みを使ってください。",
+  storageSaveFailed: "台帳を保存できませんでした（ブラウザの保存領域が一杯か利用できない可能性があります）。このページを閉じると直前の変更が失われることがあります。バックアップとして今すぐ JSON 書き出しを使ってください。",
 },
 en: {
   tagline: "BIOS registry for multiple motherboards",
@@ -993,6 +995,8 @@ en: {
   helpCautionBody: "Even if progress seems stuck at 99% or frozen for minutes, the update is usually still running — never cut the power or reboot in the meantime. A black screen right after the reboot (memory training, 30 seconds to 2 minutes) is normal. Cutting power in a panic is one of the main causes of a board that no longer boots. Loading Optimized Defaults beforehand to clear XMP/EXPO and voltage tuning is another basic safeguard. For emergencies, record each board's recovery options (USB Flashback, dual BIOS, recovery notes) in the Edit form so the recovery order is at hand when you need it.",
   helpPcTitle: "PC integration (desktop app only)",
   helpPcBody: "In the desktop app (BIOSMAN.exe), BIOSMAN scans connected USB drives read-only, lists the BIOS files it finds, and matches them against the registry. When a version can be estimated from a file name it is labelled as an estimate and can be corrected before recording. You are notified when a USB drive holds a BIOS newer than a board's installed version. For boards with a recorded official download URL, the official page is fetched and newer-version candidates are presented. Candidates are estimates; recording always requires your confirmation. USB drives are never written to or deleted from. For ASUS boards, BIOSMAN queries the official ASUS support API by model name and reads the latest version and its release date from the structured response; the fetched version, fetch time, and source are recorded in the registry and shown on the board's card (automatic fetching currently covers ASUS only).",
+  storageLoadFailed: "The saved BIOSMAN data could not be read, so BIOSMAN opened with an empty registry. The original data was preserved in browser storage under the key \"biosman-v1.backup\". Use JSON export/import to protect or move your data.",
+  storageSaveFailed: "The registry could not be saved (browser storage may be full or unavailable). Your latest edits may be lost if you close this page. Use Export JSON now to keep a backup.",
 }
 };
 </script>
@@ -1000,6 +1004,8 @@ en: {
 <script>
 "use strict";
 /* ---------- state ---------- */
+var storageLoadFailed = false;
+var storageSaveWarned = false;
 var state = loadState();
 var sortMode = "update";
 var updateTargetId = null;
@@ -1009,20 +1015,33 @@ function loadState(){
   try{
     var raw = localStorage.getItem(STORAGE_KEY);
     if(raw){
-      var parsed = JSON.parse(raw);
-      if(parsed && Array.isArray(parsed.boards)){
+      var valid = false;
+      try{
+        var parsed = JSON.parse(raw);
+        valid = !!(parsed && Array.isArray(parsed.boards));
+      }catch(parseErr){ valid = false; }
+      if(valid){
         return {
           lang: parsed.lang === "en" ? "en" : "ja",
           boards: parsed.boards,
           usbs: Array.isArray(parsed.usbs) ? parsed.usbs : []
         };
       }
+      try{ localStorage.setItem(STORAGE_KEY + ".backup", raw); }catch(backupErr){ /* best effort: keep running even if backup cannot be written */ }
+      storageLoadFailed = true;
     }
   }catch(e){ /* corrupted storage: start clean rather than crash */ }
   return { lang: "ja", boards: [], usbs: [] };
 }
 function saveState(){
-  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){ /* quota: keep running */ }
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }catch(e){
+    if(!storageSaveWarned){
+      storageSaveWarned = true;
+      alert(t("storageSaveFailed"));
+    }
+  }
 }
 function t(key){
   var d = I18N[state.lang] || I18N.ja;
@@ -1810,6 +1829,7 @@ document.getElementById("importModal").addEventListener("click", function(ev){
 buildChecklist();
 applyI18n();
 render();
+if(typeof storageLoadFailed !== "undefined" && storageLoadFailed) alert(t("storageLoadFailed"));
 </script>
 
 <script>

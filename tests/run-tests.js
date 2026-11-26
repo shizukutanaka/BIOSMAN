@@ -141,6 +141,68 @@ section('asus', ['parseAsusBiosResponse'], () => {
   ok(rb.ok && rb.version === '3901', 'parse: beta-only list yields the beta version as a candidate');
 });
 
+/* ---------------- storage failure handling ---------------- */
+function makeStorageTestSandbox(initial, failSet) {
+  const data = Object.assign({}, initial || {});
+  const alerts = [];
+  const sandbox = {
+    console,
+    STORAGE_KEY: 'biosman-v1',
+    storageLoadFailed: false,
+    storageSaveWarned: false,
+    state: { lang: 'ja', boards: [], usbs: [] },
+    alerts,
+    storageData: data,
+    alert: msg => alerts.push(msg),
+    t: key => key,
+    localStorage: {
+      getItem(key) { return Object.prototype.hasOwnProperty.call(data, key) ? data[key] : null; },
+      setItem(key, value) {
+        if (failSet) throw new Error('storage unavailable');
+        data[key] = String(value);
+      }
+    }
+  };
+  vm.createContext(sandbox);
+  for (const name of ['loadState', 'saveState']) {
+    const src = extractFn(scripts, name);
+    if (!src) throw new Error('missing function: ' + name);
+    vm.runInContext(src, sandbox);
+  }
+  return sandbox;
+}
+
+{
+  const corrupt = '{"boards":[broken';
+  const corruptSandbox = makeStorageTestSandbox({ 'biosman-v1': corrupt });
+  const loadedCorrupt = corruptSandbox.loadState();
+  ok(Array.isArray(loadedCorrupt.boards) && loadedCorrupt.boards.length === 0,
+    'storage: corrupt stored JSON falls back to empty boards');
+  ok(corruptSandbox.storageData['biosman-v1.backup'] === corrupt,
+    'storage: corrupt stored string is preserved under biosman-v1.backup');
+  ok(corruptSandbox.storageLoadFailed === true, 'storage: corrupt load sets the warning flag');
+  corruptSandbox.saveState();
+  ok(corruptSandbox.storageData['biosman-v1.backup'] === corrupt && corruptSandbox.storageData['biosman-v1'] !== corrupt,
+    'storage: later save does not overwrite the preserved backup');
+
+  const invalidShape = '{"boards":{},"usbs":[]}';
+  const shapeSandbox = makeStorageTestSandbox({ 'biosman-v1': invalidShape });
+  const loadedShape = shapeSandbox.loadState();
+  ok(Array.isArray(loadedShape.boards) && loadedShape.boards.length === 0 &&
+    shapeSandbox.storageData['biosman-v1.backup'] === invalidShape,
+    'storage: invalid stored shape falls back cleanly and is backed up');
+
+  const saveSandbox = makeStorageTestSandbox({}, true);
+  let saveThrew = false;
+  try { saveSandbox.saveState(); } catch (e) { saveThrew = true; }
+  ok(!saveThrew, 'storage: saveState does not throw when localStorage.setItem throws');
+  ok(saveSandbox.storageSaveWarned === true && saveSandbox.alerts.length === 1 &&
+    saveSandbox.alerts[0] === 'storageSaveFailed',
+    'storage: save failure sets the warned flag and alerts once');
+  saveSandbox.saveState();
+  ok(saveSandbox.alerts.length === 1, 'storage: save failure alert is throttled to once per session');
+}
+
 /* ---------------- same-PC collector ---------------- */
 async function testLocalCollector() {
   const sample = 'BASEBOARD_MANUFACTURER=Micro-Star International\r\nBASEBOARD_PRODUCT=Test Board\r\n' +
