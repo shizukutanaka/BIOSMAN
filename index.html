@@ -1012,6 +1012,9 @@ var updateTargetId = null;
 var openHistory = {};
 
 function loadState(){
+  function isValidEntry(entry){
+    return !!(entry && typeof entry === "object" && !Array.isArray(entry));
+  }
   try{
     var raw = localStorage.getItem(STORAGE_KEY);
     if(raw){
@@ -1021,10 +1024,17 @@ function loadState(){
         valid = !!(parsed && Array.isArray(parsed.boards));
       }catch(parseErr){ valid = false; }
       if(valid){
+        var boards = parsed.boards.filter(isValidEntry);
+        var usbEntries = Array.isArray(parsed.usbs) ? parsed.usbs : [];
+        var usbs = usbEntries.filter(isValidEntry);
+        if(boards.length !== parsed.boards.length || usbs.length !== usbEntries.length){
+          try{ localStorage.setItem(STORAGE_KEY + ".backup", raw); }catch(backupErr){ /* best effort: keep running even if backup cannot be written */ }
+          storageLoadFailed = true;
+        }
         return {
           lang: parsed.lang === "en" ? "en" : "ja",
-          boards: parsed.boards,
-          usbs: Array.isArray(parsed.usbs) ? parsed.usbs : []
+          boards: boards,
+          usbs: usbs
         };
       }
       try{ localStorage.setItem(STORAGE_KEY + ".backup", raw); }catch(backupErr){ /* best effort: keep running even if backup cannot be written */ }

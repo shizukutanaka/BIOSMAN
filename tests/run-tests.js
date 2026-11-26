@@ -201,6 +201,46 @@ function makeStorageTestSandbox(initial, failSet) {
     'storage: save failure sets the warned flag and alerts once');
   saveSandbox.saveState();
   ok(saveSandbox.alerts.length === 1, 'storage: save failure alert is throttled to once per session');
+
+  const boardA = { id: 'board-a', vendor: 'MSI', model: 'Valid Board A', curVer: '1.0' };
+  const boardB = { id: 'board-b', vendor: 'ASUS', model: 'Valid Board B', curVer: '2.0' };
+  const usbA = { id: 'usb-a', label: 'Valid USB', files: [] };
+
+  const nullBoardRaw = JSON.stringify({ lang: 'en', boards: [boardA, null, boardB], usbs: [] });
+  const nullBoardSandbox = makeStorageTestSandbox({ 'biosman-v1': nullBoardRaw });
+  const loadedNullBoards = nullBoardSandbox.loadState();
+  ok(JSON.stringify(loadedNullBoards.boards) === JSON.stringify([boardA, boardB]),
+    'storage: null board entry is dropped and valid boards are kept');
+  ok(nullBoardSandbox.storageLoadFailed === true,
+    'storage: null board entry sets the warning flag');
+  ok(nullBoardSandbox.storageData['biosman-v1.backup'] === nullBoardRaw,
+    'storage: original string is backed up when a board entry is dropped');
+
+  const scalarBoardRaw = JSON.stringify({ boards: [boardA, 7, 'bad entry', [], boardB], usbs: [] });
+  const scalarBoardSandbox = makeStorageTestSandbox({ 'biosman-v1': scalarBoardRaw });
+  const loadedScalarBoards = scalarBoardSandbox.loadState();
+  ok(JSON.stringify(loadedScalarBoards.boards) === JSON.stringify([boardA, boardB]) &&
+    scalarBoardSandbox.storageLoadFailed === true &&
+    scalarBoardSandbox.storageData['biosman-v1.backup'] === scalarBoardRaw,
+    'storage: number, string, and array board entries are dropped without discarding valid boards');
+
+  const malformedUsbRaw = JSON.stringify({ boards: [boardA], usbs: [usbA, null, 7, 'bad usb'] });
+  const malformedUsbSandbox = makeStorageTestSandbox({ 'biosman-v1': malformedUsbRaw });
+  const loadedMalformedUsbs = malformedUsbSandbox.loadState();
+  ok(JSON.stringify(loadedMalformedUsbs.boards) === JSON.stringify([boardA]) &&
+    JSON.stringify(loadedMalformedUsbs.usbs) === JSON.stringify([usbA]) &&
+    malformedUsbSandbox.storageLoadFailed === true &&
+    malformedUsbSandbox.storageData['biosman-v1.backup'] === malformedUsbRaw,
+    'storage: malformed usb entries are dropped and valid entries are kept');
+
+  const validRaw = JSON.stringify({ lang: 'en', boards: [boardA, boardB], usbs: [usbA] });
+  const validSandbox = makeStorageTestSandbox({ 'biosman-v1': validRaw });
+  const loadedValid = validSandbox.loadState();
+  ok(JSON.stringify(loadedValid) === validRaw,
+    'storage: fully valid stored state loads unchanged');
+  ok(validSandbox.storageLoadFailed === false &&
+    !Object.prototype.hasOwnProperty.call(validSandbox.storageData, 'biosman-v1.backup'),
+    'storage: fully valid stored state does not set the warning flag or write a backup');
 }
 
 /* ---------------- same-PC collector ---------------- */
